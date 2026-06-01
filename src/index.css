@@ -1,0 +1,124 @@
+@import url('https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap');
+
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Plus Jakarta Sans", "Geist", system-ui, -apple-system, sans-serif;
+  --font-serif: "Playfair Display", Georgia, serif;
+  --font-mono: "Fira Code", monospace;
+
+  --color-brand-emerald: #10b981;
+  --color-brand-teal: #14b8a6;
+  --color-brand-turquoise: #06b6d4;
+  --color-brand-gold: #fbbf24;
+}
+
+/* Base custom resets & clean animations */
+body {
+  font-family: var(--font-sans);
+  background-color: #f8fafc;
+  color: #0f172a;
+  overflow-x: hidden;
+  scroll-behavior: smooth;
+  image-rendering: -webkit-optimize-contrast;
+}
+
+/* Custom Webkit scrollbar for premium look */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: rgba(241, 245, 249, 0.5);
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.4);
+  border-radius: 99px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 163, 184, 0.6);
+}
+
+/* Glassmorphism utility tokens */
+.liquid-glass {
+  background: rgba(255, 255, 255, 0.45);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.04),
+              inset 0 1px 1px rgba(255, 255, 255, 0.8);
+}
+
+.liquid-glass-dark {
+  background: rgba(15, 23, 42, 0.7);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 15px 35px -12px rgba(0, 0, 0, 0.5);
+}
+
+.liquid-glass-gold {
+  background: rgba(253, 251, 247, 0.65);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border: 1px solid rgba(197, 160, 89, 0.25);
+  box-shadow: 0 12px 30px -10px rgba(139, 92, 26, 0.05),
+              inset 0 1px 2px rgba(255, 255, 255, 0.9);
+}
+
+.glass-pill {
+  background: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+}
+
+/* Background animated glass blob triggers */
+@keyframes float-blob {
+  0% { transform: translateY(0px) scale(1) rotate(0deg); }
+  33% { transform: translateY(-40px) scale(1.1) rotate(120deg); }
+  66% { transform: translateY(30px) scale(0.9) rotate(240deg); }
+  100% { transform: translateY(0px) scale(1) rotate(360deg); }
+}
+
+.animate-blob-1 {
+  animation: float-blob 22s infinite ease-in-out;
+}
+.animate-blob-2 {
+  animation: float-blob 28s infinite ease-in-out reverse;
+}
+.animate-blob-3 {
+  animation: float-blob 24s infinite ease-in-out;
+}
+
+/* Beautiful custom background patterns */
+.pattern-dots {
+  background-image: radial-gradient(rgba(15, 23, 42, 0.04) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+.pattern-grid {
+  background-size: 40px 40px;
+  background-image: linear-gradient(to right, rgba(16, 185, 129, 0.03) 1px, transparent 1px),
+                    linear-gradient(to bottom, rgba(16, 185, 129, 0.03) 1px, transparent 1px);
+}
+
+/* Wedding specific styling elements */
+.wedding-font-serif {
+  font-family: var(--font-serif);
+}
+
+.wedding-font-sans {
+  font-family: var(--font-sans);
+}
+
+/* Soft gold glow text */
+.text-gold-gradient {
+  background: linear-gradient(135deg, #dfb76c 0%, #b89146 50%, #906e2a 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Glow effects */
+.glow-emerald {
+  filter: drop-shadow(0 0 15px rgba(16, 185, 129, 0.15));
+}

@@ -1,0 +1,6 @@
+{
+  "name": "Educita.id",
+  "description": "Digitalisasi Sekolah Dimulai dari Educita. Solusi sistem informasi, website sekolah, jaringan, CCTV, dan administrasi sekolah digital.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
