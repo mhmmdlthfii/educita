@@ -181,6 +181,33 @@ export default function AdminView() {
           </p>
         </div>
 
+        {/* WEDDING CMS CALLOUT BANNER */}
+        <div className="mb-8 p-6 bg-gradient-to-r from-emerald-950 via-slate-900 to-indigo-950 rounded-3xl border border-[#dfb76c]/30 text-white flex flex-col sm:flex-row shadow-lg items-center justify-between gap-4">
+          <div className="space-y-1">
+            <span className="text-[9px] bg-[#dfb76c]/20 text-[#dfb76c] font-black tracking-widest uppercase px-2.5 py-1 rounded border border-[#dfb76c]/30 font-mono">
+              🎬 ADVANCED WEDDING MODUL CMS
+            </span>
+            <h4 className="text-base font-black tracking-tight mt-1">Muhammad Luthfi & Siti Hanum Handayani Custom Wedding Builder</h4>
+            <p className="text-[11px] text-slate-300 leading-relaxed">
+              Elementor-style visual constructor to edit bride & groom details, stories, themes, draws, RSVPs lists, and digital gacha live.
+            </p>
+          </div>
+          <div className="flex gap-2 shrink-0">
+            <button 
+              onClick={() => window.location.hash = '#/admin/wedding'}
+              className="px-4 py-2.5 bg-[#dfb76c] text-slate-950 font-black tracking-widest uppercase rounded-xl text-[10px] shadow hover:scale-102 transition cursor-pointer"
+            >
+              VISUAL PAGE BUILDER
+            </button>
+            <button 
+              onClick={() => window.location.hash = '#/admin/wedding/checkin'}
+              className="px-4 py-2.5 bg-slate-800 border border-slate-700 text-[#dfb76c] font-black tracking-widest uppercase rounded-xl text-[10px] shadow hover:scale-102 transition cursor-pointer"
+            >
+              CHECK-IN GATE SCANNER
+            </button>
+          </div>
+        </div>
+
         {/* TABS SELECTOR */}
         <div className="flex flex-wrap items-center justify-center gap-2 p-1.5 rounded-xl bg-slate-100 border border-slate-200 mb-8 max-w-2xl mx-auto">
           {[

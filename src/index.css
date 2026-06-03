@@ -13,6 +13,21 @@
   --color-brand-gold: #fbbf24;
 }
 
+/* Custom modern pure green gradient utilities */
+.bg-modern-gradient {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+}
+
+.text-modern-gradient {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.hover-glow-brand:hover {
+  box-shadow: 0 10px 25px -5px rgba(16, 185, 129, 0.35);
+}
+
 /* Base custom resets & clean animations */
 body {
   font-family: var(--font-sans);

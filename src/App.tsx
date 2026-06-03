@@ -13,6 +13,8 @@ import ShopView from './components/ShopView';
 import WeddingView from './components/WeddingView';
 import DashboardView from './components/DashboardView';
 import AdminView from './components/AdminView';
+import AdminWeddingView from './components/AdminWeddingView';
+import WeddingEditorView from './components/WeddingEditorView';
 
 export default function App() {
   // Sync page state with window.location.hash
@@ -21,6 +23,17 @@ export default function App() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [consultationOpen, setConsultationOpen] = useState(false);
   const [activeShopSlug, setActiveShopSlug] = useState<string | null>(null);
+
+  const [isDarkMode, setIsDarkMode] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('educita_theme_dark') === 'true';
+    }
+    return false;
+  });
+
+  useEffect(() => {
+    localStorage.setItem('educita_theme_dark', String(isDarkMode));
+  }, [isDarkMode]);
 
   // Form state for floating general consultation
   const [isBookingSuccess, setIsBookingSuccess] = useState(false);
@@ -113,12 +126,13 @@ export default function App() {
     { label: 'Founder Bio Profile (/profile/luthfi)', path: '/profile/luthfi' },
     { label: 'Digital Store Catalog (/shop)', path: '/shop' },
     { label: 'Wedding Invitation (/wedding/hanum-luthfi)', path: '/wedding/hanum-luthfi', hasGuest: true },
+    { label: 'Wedding Editor (/wedding/.../editor)', path: '/wedding/hanum-luthfi/editor' },
     { label: 'Admin Metrics Analytics (/dashboard)', path: '/dashboard' },
     { label: 'CMS Content Panel (/admin)', path: '/admin' }
   ];
 
   return (
-    <div className="min-h-screen bg-[#F4F7F6] flex flex-col relative antialiased text-slate-800">
+    <div className={`min-h-screen ${isDarkMode ? 'bg-slate-950 text-slate-100' : 'bg-[#F4F7F6] text-slate-800'} flex flex-col relative antialiased transition-colors duration-300`}>
       
       {/* ==========================================
           A. SMART APPLE-LEVEL VIRTUAL BROWSER FRAME
@@ -196,15 +210,16 @@ export default function App() {
       {/* ==========================================
           B. PRIMARY HEADER SITE NAVIGATION
           ========================================== */}
-      <navbar className="sticky top-0 z-30 bg-white/30 backdrop-blur-md border-b border-white/50 shadow-xs px-6 sm:px-12 py-5 flex items-center justify-between">
+      {!currentPath.includes('wedding') && (
+        <nav className={`sticky top-0 z-30 ${isDarkMode ? 'bg-slate-900/60 border-b border-slate-850 text-white' : 'bg-white/30 border-b border-white/50 text-[#1E293B]'} backdrop-blur-md shadow-xs px-6 sm:px-12 py-5 flex items-center justify-between transition-colors duration-300`}>
         <div className="flex items-center gap-8">
           {/* Logo brand with geometric nested structure */}
           <div className="flex items-center gap-3 cursor-pointer" onClick={() => navigateTo('/')}>
-            <div className="w-10 h-10 bg-gradient-to-tr from-emerald-500 to-teal-400 rounded-xl flex items-center justify-center shadow-lg shadow-emerald-200/50 transition duration-300">
+            <div className="w-10 h-10 bg-gradient-to-tr from-emerald-500 to-teal-400 rounded-xl flex items-center justify-center shadow-lg shadow-emerald-200/20 transition duration-350">
               <div className="w-5 h-5 bg-white rounded-sm rotate-45 flex items-center justify-center text-emerald-600 font-black text-xs">E</div>
             </div>
             <div>
-              <span className="text-xl font-bold tracking-tight text-emerald-950 leading-none block">EDUCITA<span className="text-teal-500 font-extrabold">.id</span></span>
+              <span className={`text-xl font-bold tracking-tight ${isDarkMode ? 'text-white' : 'text-slate-900'} leading-none block`}>EDUCITA<span className="text-emerald-500 font-extrabold">.id</span></span>
               <span className="text-[9px] font-mono text-slate-400 tracking-widest uppercase block leading-none mt-0.5">School Digitalization</span>
             </div>
           </div>
@@ -227,8 +242,8 @@ export default function App() {
                   }}
                   className={`text-[13px] font-semibold transition duration-200 cursor-pointer ${
                     currentPath === lnk.path 
-                      ? 'text-emerald-800 bg-white/70 backdrop-blur border border-white rounded-full px-4 py-1.5 shadow-xs font-bold' 
-                      : 'text-slate-600 hover:text-emerald-600'
+                      ? `${isDarkMode ? 'text-emerald-400 bg-slate-805/70 border border-slate-750 rounded-full px-4 py-1.5 shadow-sm font-bold' : 'text-emerald-600 bg-white/70 border border-white rounded-full px-4 py-1.5 shadow-xs font-bold'}` 
+                      : `${isDarkMode ? 'text-slate-350 hover:text-emerald-450' : 'text-slate-600 hover:text-emerald-600'}`
                   }`}
                 >
                   {lnk.label}
@@ -247,10 +262,27 @@ export default function App() {
             </div>
           ) : (
             <>
+              {/* Sun & Moon Theme Toggle Pill */}
+              <button
+                onClick={() => setIsDarkMode(!isDarkMode)}
+                className={`w-9 h-9 rounded-full flex items-center justify-center transition-all ${
+                  isDarkMode 
+                    ? 'bg-slate-800 border border-slate-700 text-amber-405 hover:bg-slate-700' 
+                    : 'bg-white border border-slate-200 text-slate-800 hover:bg-slate-50 shadow-2xs'
+                } cursor-pointer`}
+                title={isDarkMode ? "Ganti ke Mode Terang" : "Ganti ke Mode Gelap"}
+              >
+                {isDarkMode ? (
+                  <svg className="w-4 h-4 fill-amber-400 text-amber-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+                ) : (
+                  <svg className="w-4 h-4 fill-slate-850 text-slate-850" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+                )}
+              </button>
+
               <button 
                 id="btn-nav-whatsapp"
                 onClick={() => setConsultationOpen(true)}
-                className="hidden sm:flex px-6 py-2.5 bg-emerald-600 text-white text-xs font-bold rounded-full shadow-lg shadow-emerald-200/50 hover:bg-emerald-700 hover:scale-102 transform transition-all items-center gap-1.5 cursor-pointer"
+                className="hidden sm:flex px-6 py-2.5 bg-emerald-600 text-white text-xs font-bold rounded-full shadow-lg shadow-emerald-200/30 hover:bg-emerald-700 hover:scale-102 transform transition-all items-center gap-1.5 cursor-pointer"
               >
                 <PhoneCall className="w-3.5 h-3.5" />
                 <span>Konsultasi Gratis</span>
@@ -264,7 +296,7 @@ export default function App() {
                     window.location.reload();
                   }
                 }}
-                className="hidden lg:flex px-4 py-2.5 rounded-full border border-slate-300 bg-white/30 backdrop-blur hover:bg-white text-slate-600 font-bold text-[10px] uppercase shadow-xs cursor-pointer"
+                className={`hidden lg:flex px-4 py-2.5 rounded-full border ${isDarkMode ? 'border-slate-800 bg-slate-900 text-slate-400 hover:bg-slate-850' : 'border-slate-300 bg-white/30 text-slate-600 hover:bg-white'} backdrop-blur font-bold text-[10px] uppercase shadow-xs cursor-pointer transition`}
                 title="Reset local storage"
               >
                 Reset DB Sandbox
@@ -275,17 +307,18 @@ export default function App() {
           {/* Toggle Mobile menu button */}
           <button 
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="md:hidden w-9 h-9 border border-slate-200 rounded-lg flex items-center justify-center text-slate-600 hover:bg-slate-50 cursor-pointer text-xs"
+            className={`md:hidden w-9 h-9 border ${isDarkMode ? 'border-slate-800 text-slate-300 bg-slate-900' : 'border-slate-200 text-slate-600 bg-white'} rounded-lg flex items-center justify-center hover:bg-slate-50 cursor-pointer text-xs`}
           >
             {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </button>
         </div>
-      </navbar>
+      </nav>
+      )}
 
       {/* ==========================================
           C. MOBILE HIDDEN NAVIGATION PANEL
           ========================================== */}
-      {mobileMenuOpen && (
+      {mobileMenuOpen && !currentPath.includes('wedding') && (
         <div className="md:hidden bg-white border-b border-slate-200 px-6 py-6 space-y-4 absolute top-[110px] left-0 right-0 z-30 shadow-lg text-slate-800">
           <div className="flex flex-col gap-3">
             {[
@@ -333,6 +366,7 @@ export default function App() {
               navigateTo('/shop');
               // Pre-fill query input or go directly to shop
             }}
+            isDarkMode={isDarkMode}
           />
         )}
         {currentPath === '/profile/luthfi' && <ProfileView />}
@@ -352,6 +386,12 @@ export default function App() {
         {currentPath === '/wedding/hanum-luthfi' && (
           <WeddingView toGuest={guestName} />
         )}
+        {currentPath === '/wedding/hanum-luthfi/editor' && (
+          <WeddingEditorView />
+        )}
+        {currentPath.startsWith('/admin/wedding') && (
+          <AdminWeddingView />
+        )}
         {currentPath === '/dashboard' && <DashboardView />}
         {currentPath === '/admin' && <AdminView />}
       </main>
@@ -359,14 +399,14 @@ export default function App() {
       {/* ==========================================
           E. SITE FOOTER SECTION
           ========================================== */}
-      {currentPath !== '/wedding/hanum-luthfi' && (
+      {!currentPath.includes('wedding') && (
         <footer className="bg-slate-900 text-slate-400 pt-16 pb-12 border-t border-slate-950 px-4 sm:px-8 mt-auto">
           <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-12 gap-8 md:gap-12 mb-12">
             
             {/* Column 1 info */}
             <div className="md:col-span-5 space-y-4">
               <div className="flex items-center gap-2 text-white font-bold">
-                <div className="w-8 h-8 rounded-lg bg-emerald-600 flex items-center justify-center text-white text-base">E</div>
+                <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-emerald-600 to-teal-400 flex items-center justify-center text-white text-base font-black">E</div>
                 <span className="text-base tracking-tight font-extrabold">Educita<span className="text-emerald-500">.id</span></span>
               </div>
               <p className="text-xs text-slate-400 leading-relaxed">
@@ -374,7 +414,7 @@ export default function App() {
               </p>
               <div className="text-xs text-slate-400">
                 Email: <span className="text-slate-300 font-semibold">muhLuthfi.23@gmail.com</span><br />
-                Hotline WA: <span className="text-emerald-400 font-bold font-mono">0812-3456-7890</span>
+                Hotline WA: <span className="text-emerald-500 font-bold font-mono">0812-3456-7890</span>
               </div>
             </div>
 

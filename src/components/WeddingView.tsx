@@ -1,37 +1,317 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   Heart, Calendar, MapPin, Gift, BookOpen, Send, 
-  Map, Copy, Check, Users, Users2, Clock, Sparkles, AlertCircle 
+  Map, Copy, Check, Users, Users2, Clock, Sparkles, 
+  AlertCircle, Play, Pause, Volume2, VolumeX, Ticket, 
+  ChevronLeft, ChevronRight, HelpCircle, Film, Trophy, 
+  Camera, User, Smile, Sparkle, Compass
 } from 'lucide-react';
-import { dbService } from '../lib/supabase';
-import { WeddingGuestbook, WeddingRSVP } from '../types/database';
+import { weddingDb, WeddingSectionType, WeddingSettingsType, WeddingGuestbookMessage, WeddingRSVPTicket, SouvenirRewardType } from '../lib/weddingDb';
 
 interface WeddingViewProps {
   toGuest?: string;
+  slug?: string;
+  key?: any;
 }
 
-export default function WeddingView({ toGuest }: WeddingViewProps) {
+const PROFILE_TEMPLATES = [
+  { id: 'ayahanda', name: 'Ayahanda', label: 'PRIA BIJAKSANA', char: '👴', color: 'from-stone-800 to-stone-900 border-amber-600/60' },
+  { id: 'ibunda', name: 'Ibunda', label: 'WANITA PENYAYANG', char: '👵', color: 'from-zinc-800 to-stone-950 border-pink-700/60' },
+  { id: 'keluarga', name: 'Keluarga', label: 'PILAR UTAMA', char: '👨‍👩‍👧', color: 'from-zinc-800 to-stone-950 border-blue-600/60' },
+  { id: 'kerabat-sman', name: 'Kerabat SMAN', label: 'TEMAN SEKOLAH', char: '🎓', color: 'from-zinc-800 to-stone-950 border-emerald-600/60' },
+  { id: 'teman-sejawat', name: 'Teman Sejawat', label: 'REKAN KERJA', char: '💼', color: 'from-zinc-800 to-stone-950 border-amber-500/60' },
+  { id: 'vip', name: 'Tamu VIP', label: 'KEHORMATAN VIP', char: '👑', color: 'from-yellow-950/20 to-stone-950 border-amber-400/70' },
+  { id: 'gentleman', name: 'Gentleman', label: 'TAMU PRIA ELEGAN', char: '🤵', color: 'from-slate-900 to-stone-950 border-slate-600/60' },
+  { id: 'lady', name: 'Elegant Lady', label: 'TAMU WANITA ANGGUN', char: '👩‍💼', color: 'from-rose-950/20 to-stone-950 border-rose-600/60' },
+];
+
+const CINEMATIC_CHAPTERS = [
+  {
+    title: "Detail Sakral",
+    subtitle: "Rencana Pembuka",
+    genre: "Dokumenter • Roman",
+    image: "https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&q=80&w=500",
+    quote: "Langkah awal memulai perbincangan tentang arti kesungguhan.",
+    videoUrl: "https://www.w3schools.com/html/mov_bbb.mp4"
+  },
+  {
+    title: "Kamu dan...",
+    subtitle: "Rapat Pendampingan",
+    genre: "Romansa • Kelas",
+    image: "https://images.unsplash.com/photo-1511285560929-80b456fea0bc?auto=format&fit=crop&q=80&w=500",
+    quote: "Di sela-sela pembahasan kode rapor rilis, tersimpan senyum yang tulus.",
+    videoUrl: "https://www.w3schools.com/html/mov_bbb.mp4"
+  },
+  {
+    title: "Keberangkatan",
+    subtitle: "Jangan Melamun Saat Hujan",
+    genre: "Romansa • Drama",
+    image: "https://images.unsplash.com/photo-1515934751635-c81c6bc9a2d8?auto=format&fit=crop&q=80&w=500",
+    quote: "Perjalanan kereta yang mempertemukan dua insan dari kota pelabuhan menuju ketenangan.",
+    videoUrl: "https://www.w3schools.com/html/mov_bbb.mp4"
+  },
+  {
+    title: "Memotret Keindahan",
+    subtitle: "Sudut Lama Kota Lama",
+    genre: "Romansa • Dokumenter",
+    image: "https://images.unsplash.com/photo-1606800052052-a08af7148866?auto=format&fit=crop&q=80&w=500",
+    quote: "Melalui lensa kamera, rasa kagum perlahan diabadikan dalam bingkai abadi.",
+    videoUrl: "https://www.w3schools.com/html/mov_bbb.mp4"
+  },
+  {
+    title: "Pertumbuhan",
+    subtitle: "Saling Belajar",
+    genre: "Drama • Motivasi",
+    image: "https://images.unsplash.com/photo-1465495976277-4387d4b0b4c6?auto=format&fit=crop&q=80&w=500",
+    quote: "Menemukan arti bersandar di kala lelah membimbing generasi penerus bangsa.",
+    videoUrl: "https://www.w3schools.com/html/mov_bbb.mp4"
+  }
+];
+
+const FRIEND_STORIES = [
+  {
+    name: "Kak",
+    fullName: "Kak Farida",
+    avatar: "👩‍🦳",
+    message: "Barakallah fikum Luthfi dan Hanum, semoga dilancarkan segala urusan akad nikahnya.",
+    reply: "Ahad berkah penuh doa. Terima kasih banyak Kak Farida atas restu indahnya bagi kami.",
+    rating: "5/5",
+    time: "3 JAM LALU",
+    views: 124
+  },
+  {
+    name: "Yuhyi",
+    fullName: "Yuhyi Mulia",
+    avatar: "👩‍🎓",
+    message: "Selamat ya neng Hanum, semoga menjadi keluarga sakinah mawaddah warahmah.",
+    reply: "Terima kasih banyak Yuhyi sayang atas kedatangannya serta doanya yang indah.",
+    rating: "5/5",
+    time: "6 JAM LALU",
+    views: 89
+  },
+  {
+    name: "Diah",
+    fullName: "Diah dan Suami",
+    avatar: "💼",
+    message: "Masya Allah selamat menjalankan ibadah terpanjang Tsamarah dan suami, semoga bahagia selalu dunia akhirat❤️",
+    reply: "Kepada Diah dan Suami, terima kasih banyak atas doa tulus serta ucapan indahnya untuk kami berdua. Semoga kebahagiaan dan keberkahan yang sama juga senantiasa menyertai kehidupan rumah tangga kalian. — Luthfi & Hanum",
+    rating: "5/5",
+    time: "1 HARI LALU",
+    views: 218
+  },
+  {
+    name: "Mbak",
+    fullName: "Mbak Ningrum",
+    avatar: "👩‍💼",
+    message: "Sangat ikut bahagia mendengarnya ffi, selamat menempuh hidup baru ya!",
+    reply: "Matur nuwun Mbak Ningrum atas ucapan hangatnya, semoga sehat sekeluarga nggih.",
+    rating: "5/5",
+    time: "2 HARI LALU",
+    views: 145
+  },
+  {
+    name: "Pricilla",
+    fullName: "dr. Pricilla",
+    avatar: "👩‍⚕️",
+    message: "Selamat menempuh gerbang ibadah mulia! Bahagia terus kalian.",
+    reply: "Terima kasih dr. Pricilla, salam hangat dari kami sekeluarga.",
+    rating: "5/5",
+    time: "3 HARI LALU",
+    views: 310
+  }
+];
+
+export default function WeddingView({ toGuest, slug = 'hanum-luthfi' }: WeddingViewProps) {
+  // Database States
+  const [sections, setSections] = useState<WeddingSectionType[]>([]);
+  const [settings, setSettings] = useState<WeddingSettingsType | null>(null);
+  const [guestBook, setGuestBook] = useState<WeddingGuestbookMessage[]>([]);
+  const [rewardsList, setRewardsList] = useState<SouvenirRewardType[]>([]);
+  
+  // UI States
   const [isOpen, setIsOpen] = useState(false);
-  const [guestBook, setGuestBook] = useState<WeddingGuestbook[]>([]);
+  const [isMovieLoading, setIsMovieLoading] = useState(false);
+  const [movieLoadingStep, setMovieLoadingStep] = useState(0);
+  const [selectedAvatar, setSelectedAvatar] = useState<string>('👴');
+  const [customAvatarUrl, setCustomAvatarUrl] = useState<string>('');
+  const [isMusicPlaying, setIsMusicPlaying] = useState(false);
+  const [videoPlaying, setVideoPlaying] = useState(false);
   const [copiedAccount, setCopiedAccount] = useState<string | null>(null);
+  const [lightboxImage, setLightboxImage] = useState<string | null>(null);
+  const [activeStoryIdx, setActiveStoryIdx] = useState(0);
+  const [storyProgress, setStoryProgress] = useState(0);
+  const [coverStep, setCoverStep] = useState<number>(1);
+  const [selectedProfileIdx, setSelectedProfileIdx] = useState<number>(0);
+  const [selectedProfileName, setSelectedProfileName] = useState<string>('Ayahanda');
+  const [giftDrawerOpen, setGiftDrawerOpen] = useState(false);
+  const [loadingPct, setLoadingPct] = useState<number>(0);
+  const [selectedReview, setSelectedReview] = useState<any | null>(null);
+  const [carouselIdx, setCarouselIdx] = useState(2);
+
+  // AI Route Assistant States
+  const [routeStartLocation, setRouteStartLocation] = useState('');
+  const [routePlanning, setRoutePlanning] = useState<any>(null);
+  const [routeLoading, setRouteLoading] = useState(false);
   
-  // RSVP Form state
-  const [rsvpForm, setRsvpForm] = useState({ name: toGuest || '', attendance: 'hadir', guestsCount: 1, wishes: '' });
+  // RSVP Form States
   const [rsvpSent, setRsvpSent] = useState(false);
-  
-  // Guestbook entry state
-  const [newMessage, setNewMessage] = useState({ name: toGuest || '', relation: 'Sahabat', message: '' });
-  const [messageSent, setMessageSent] = useState(false);
+  const [myTicket, setMyTicket] = useState<WeddingRSVPTicket | null>(null);
+  const [rsvpForm, setRsvpForm] = useState({
+    attendance: 'hadir' as 'hadir' | 'tidak_hadir',
+    guestsCount: 1,
+    session: 'Sesi 1 (Akad & Opening VIP)',
+    scheduleTime: '10:00 - 12:00 WIB',
+  });
 
+  // Souvenir Gacha States
+  const [isSpinning, setIsSpinning] = useState(false);
+  const [gachaReward, setGachaReward] = useState<SouvenirRewardType | null>(null);
+  const [hasDrawn, setHasDrawn] = useState(false);
+
+  // Guestbook submissions
+  const [newMessage, setNewMessage] = useState({ message: '', prayer: '', relation: 'Sahabat' });
+  const [isSubmittingMessage, setIsSubmittingMessage] = useState(false);
+
+  // Audio elements
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  // Load configuration
   useEffect(() => {
-    async function getGuestbook() {
-      const messages = await dbService.getWeddingGuestbook();
-      setGuestBook(messages);
-    }
-    getGuestbook();
-  }, [messageSent]);
+    const loadedSections = weddingDb.getSections(slug);
+    const loadedSettings = weddingDb.getSettings(slug);
+    const loadedBook = weddingDb.getGuestbook(slug);
+    const loadedRewards = weddingDb.getRewards(slug);
 
-  const guestName = toGuest || 'Tamu Undangan';
+    setSections(loadedSections.sort((a, b) => a.order - b.order));
+    setSettings(loadedSettings);
+    setGuestBook(loadedBook);
+    setRewardsList(loadedRewards);
+
+    // Look for previous ticket booking if already rsvp
+    const allTickets = weddingDb.getTickets(slug);
+    const selfName = toGuest || 'Tamu Undangan';
+    const found = allTickets.find(t => t.guestName.toLowerCase().trim() === selfName.toLowerCase().trim());
+    if (found) {
+      setMyTicket(found);
+      setRsvpSent(true);
+      if (found.avatar) {
+        setSelectedAvatar(found.avatar);
+      }
+    }
+
+    // Look for drawn rewards
+    const drawHistory = weddingDb.getDrawHistory(slug);
+    const drawn = drawHistory.find(h => h.guestName.toLowerCase().trim() === selfName.toLowerCase().trim());
+    if (drawn) {
+      const rewDetail = loadedRewards.find(r => r.title === drawn.rewardTitle);
+      if (rewDetail) {
+        setGachaReward(rewDetail);
+        setHasDrawn(true);
+      }
+    }
+  }, [slug, toGuest]);
+
+  // Progressive Cinema Film Loading Effect
+  useEffect(() => {
+    let timer: any;
+    if (isMovieLoading) {
+      setLoadingPct(0);
+      setMovieLoadingStep(0);
+      timer = setInterval(() => {
+        setLoadingPct(prev => {
+          if (prev >= 100) {
+            clearInterval(timer);
+            setTimeout(() => {
+              setIsMovieLoading(false);
+              setIsOpen(true);
+            }, 600);
+            return 100;
+          }
+          const jump = Math.floor(Math.random() * 14) + 6;
+          const nextVal = Math.min(100, prev + jump);
+          setMovieLoadingStep(Math.floor(nextVal / 20));
+          return nextVal;
+        });
+      }, 140);
+    }
+    return () => clearInterval(timer);
+  }, [isMovieLoading]);
+
+  // Audio Autoplay & Lifecycle
+  useEffect(() => {
+    if (settings?.backgroundMusicUrl && isOpen) {
+      const audio = new Audio(settings.backgroundMusicUrl);
+      audio.loop = true;
+      audioRef.current = audio;
+      if (settings.hasMusicAutoPlay) {
+        audio.play().then(() => {
+          setIsMusicPlaying(true);
+        }).catch(err => {
+          console.log('Autoplay audio blocked by browser. Awaiting user interaction.');
+        });
+      }
+    }
+    return () => {
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current = null;
+      }
+    };
+  }, [isOpen, settings]);
+
+  // Story Autoplay Carousel Timer
+  useEffect(() => {
+    if (!isOpen || guestBook.length === 0) return;
+    
+    setStoryProgress(0);
+    const timer = setInterval(() => {
+      setStoryProgress(prev => {
+        if (prev >= 100) {
+          // Move to next story
+          setActiveStoryIdx(current => (current + 1) % guestBook.length);
+          return 0;
+        }
+        return prev + 1;
+      });
+    }, 60); // approx 6s total per story
+
+    return () => clearInterval(timer);
+  }, [isOpen, activeStoryIdx, guestBook]);
+
+  // Countdown timer calculation
+  const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+  useEffect(() => {
+    if (!settings?.eventDate) return;
+
+    const targetDate = new Date(`${settings.eventDate}T09:00:00`).getTime();
+    const interval = setInterval(() => {
+      const now = new Date().getTime();
+      const difference = targetDate - now;
+
+      if (difference <= 0) {
+        clearInterval(interval);
+        setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+      } else {
+        const days = Math.floor(difference / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((difference % (1000 * 60)) / 1000);
+        setTimeLeft({ days, hours, minutes, seconds });
+      }
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [settings]);
+
+  const toggleMusic = () => {
+    if (!audioRef.current) return;
+    if (isMusicPlaying) {
+      audioRef.current.pause();
+    } else {
+      audioRef.current.play().catch(e => console.log('Audio playback error', e));
+    }
+    setIsMusicPlaying(!isMusicPlaying);
+  };
 
   const handleCopy = (text: string, label: string) => {
     navigator.clipboard.writeText(text);
@@ -39,517 +319,1745 @@ export default function WeddingView({ toGuest }: WeddingViewProps) {
     setTimeout(() => setCopiedAccount(null), 2500);
   };
 
-  const handleRSVPSubmit = async (e: React.FormEvent) => {
+  // Submit RSVP ticket booking
+  const handleRSVPBooking = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!rsvpForm.name) {
-      alert('Mohon isi nama Anda.');
-      return;
-    }
-    await dbService.addRSVP({
-      name: rsvpForm.name,
-      attendance: rsvpForm.attendance as any,
-      guestsCount: Number(rsvpForm.guestsCount),
-      wishes: rsvpForm.wishes
-    });
+    const name = toGuest || 'Tamu Undangan';
+    const avatarToSave = customAvatarUrl ? customAvatarUrl : selectedAvatar;
+
+    const ticketDetail = await weddingDb.addRSVPTicket({
+      guestName: name,
+      attendance: rsvpForm.attendance,
+      guestsCount: rsvpForm.guestsCount,
+      session: rsvpForm.session,
+      scheduleTime: rsvpForm.session.includes('Sesi 1') ? '10:00 - 12:00 WIB' : '13:00 - 15:00 WIB',
+      avatar: avatarToSave,
+      weddingSlug: slug
+    }, slug);
+
+    setMyTicket(ticketDetail);
     setRsvpSent(true);
-    setTimeout(() => {
-      setRsvpSent(false);
-      setRsvpForm({ name: toGuest || '', attendance: 'hadir', guestsCount: 1, wishes: '' });
-    }, 4000);
   };
 
-  const handleMessageSubmit = async (e: React.FormEvent) => {
+  // Draw Gacha Souvenir
+  const spinGacha = () => {
+    if (isSpinning || hasDrawn) return;
+    setIsSpinning(true);
+    
+    // Simulate spin wheels
+    setTimeout(() => {
+      const drawnReward = weddingDb.drawSouvenirReward(toGuest || 'Tamu Undangan', slug);
+      setGachaReward(drawnReward);
+      setIsSpinning(false);
+      setHasDrawn(true);
+      // Trigger inventory update
+      setRewardsList(weddingDb.getRewards(slug));
+    }, 2800);
+  };
+
+  // Send interactive Guest Message
+  const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newMessage.name || !newMessage.message) {
-      alert('Mohon lengkapi Nama dan Ucapan Anda.');
+    if (!newMessage.message || !newMessage.prayer) {
+      alert('Mohon isi Ucapan Utama dan Doa Berkat terlebih dahulu.');
       return;
     }
-    await dbService.addGuestbookEntry({
-      name: newMessage.name,
+
+    setIsSubmittingMessage(true);
+    const senderName = toGuest || 'Tamu Undangan';
+    const avatar = customAvatarUrl ? customAvatarUrl : selectedAvatar;
+
+    await weddingDb.addGuestbook({
+      name: senderName,
+      avatar,
       relation: newMessage.relation,
-      message: newMessage.message
-    });
-    setMessageSent(!messageSent); // trigger refresh
-    setNewMessage({ name: toGuest || '', relation: 'Sahabat', message: '' });
+      message: newMessage.message,
+      prayer: newMessage.prayer,
+      weddingSlug: slug
+    }, slug);
+
+    // Refresh guestbook logs
+    setGuestBook(weddingDb.getGuestbook(slug));
+    setNewMessage({ message: '', prayer: '', relation: 'Sahabat' });
+    setIsSubmittingMessage(false);
+    
+    // Switch guestbook stories to page 0 to see immediate post
+    setActiveStoryIdx(0);
+    setStoryProgress(0);
   };
 
-  // Cover Page
-  if (!isOpen) {
+  const getAvatarView = (avatarText: string) => {
+    if (avatarText.startsWith('http')) {
+      return (
+        <img 
+          src={avatarText} 
+          alt="Avatar" 
+          className="w-full h-full object-cover rounded-full" 
+          referrerPolicy="no-referrer"
+          onError={(e) => {
+            (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=150';
+          }}
+        />
+      );
+    }
+    return <span className="text-xl">{avatarText}</span>;
+  };
+
+  // Fallback loading settings
+  if (!settings) {
     return (
-      <div className="fixed inset-0 z-50 bg-slate-900 flex flex-col items-center justify-center text-white px-4">
-        {/* Immersive romantic background banner */}
-        <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&q=80&w=1200')] bg-cover bg-center opacity-30"></div>
-        <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-900/40 to-slate-950 pointer-events-none"></div>
+      <div className="min-h-screen flex items-center justify-center bg-slate-950 text-white">
+        <div className="text-center space-y-3">
+          <Sparkles className="w-8 h-8 text-emerald-400 animate-spin mx-auto" />
+          <p className="text-xs font-bold tracking-widest text-slate-400">MEMUAT EXPERIENCE PERNIKAHAN...</p>
+        </div>
+      </div>
+    );
+  }
+  // VIEW 1: PREMIUM CINEMA TICKET ENTRANCE
+  // ==========================================
+  if (isMovieLoading) {
+    return (
+      <div className="fixed inset-0 z-50 bg-[#070707] flex flex-col items-center justify-center text-white p-6 font-sans select-none overflow-hidden">
+        {/* Subtle glowing dark red background blobs */}
+        <div className="absolute inset-0 bg-radial-gradient from-red-950/20 via-transparent to-transparent opacity-60 z-0"></div>
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-red-900/10 rounded-full blur-3xl pointer-events-none z-0"></div>
 
-        <div className="max-w-md w-full text-center relative z-10 space-y-6">
-          <div className="text-xs font-bold uppercase tracking-widest text-[#dfb76c] flex items-center justify-center gap-2">
-            <Heart className="w-4.5 h-4.5 text-pink-500 fill-pink-500 animate-pulse" />
-            <span>The Wedding of</span>
-          </div>
-
-          <h1 className="wedding-font-serif text-4xl sm:text-5xl font-bold tracking-wide text-gold-gradient py-2">
-            Hanum & Luthfi
-          </h1>
-
-          <div className="w-12 h-0.5 bg-gradient-to-r from-transparent via-[#dfb76c] to-transparent mx-auto"></div>
-
-          <p className="text-xs text-slate-300 italic tracking-wider">
-            "Dan di antara tanda-tanda (kebesaran)-Nya ialah Dia menciptakan pasangan-pasangan untukmu dari jenismu sendiri..." <br />
-            <span className="text-[10px] font-bold text-slate-400 not-italic uppercase tracking-widest">(QS. Ar-Rum: 21)</span>
-          </p>
-
-          {/* Invitation recipient */}
-          <div className="liquid-glass-gold p-6 rounded-2xl border border-white/20 backdrop-blur max-w-sm mx-auto">
-            <div className="text-[10px] uppercase tracking-widest text-slate-400">Kepada Yth. Bapak/Ibu/Saudara/i:</div>
-            <div className="text-lg font-bold text-slate-800 mt-2 tracking-tight">
-              {guestName}
+        <div className="max-w-md w-full space-y-10 text-center relative z-10 flex flex-col items-center justify-center">
+          
+          {/* Vertical Movie Poster Card */}
+          <div className="relative w-[210px] h-[300px] rounded-3xl overflow-hidden shadow-[0_0_50px_rgba(130,13,13,0.45)] border border-neutral-900 bg-neutral-900 transition-all duration-300">
+            <img 
+              src="https://images.unsplash.com/photo-1515934751635-c81c6bc9a2d8?auto=format&fit=crop&q=80&w=600" 
+              alt="Immersive Wedding Cinema Premiere Poster representation" 
+              className="w-full h-full object-cover opacity-75"
+              referrerPolicy="no-referrer"
+            />
+            {/* Cinematic Gradient overlay */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black via-black/25 to-black/35"></div>
+            
+            <div className="absolute bottom-5 inset-x-4 text-center space-y-1">
+              <span className="text-[7.5px] font-mono tracking-[0.3em] font-extrabold text-[#dfb76c] uppercase">NOW SHOWING</span>
+              <h4 className="font-serif text-sm font-semibold text-white tracking-wide leading-tight">Cinta Di Balik Rapor Rilis</h4>
             </div>
-            {toGuest && (
-              <div className="text-[9px] text-[#816531] font-bold uppercase mt-1 tracking-wider bg-amber-100/60 w-fit px-2 py-0.5 rounded mx-auto">
-                Spesial Undangan
-              </div>
-            )}
           </div>
 
-          <button 
-            id="btn-open-wedding-invitation"
-            onClick={() => setIsOpen(true)}
-            className="px-8 py-3.5 rounded-full bg-gradient-to-r from-[#dfb76c] to-[#b89146] text-slate-950 font-bold hover:shadow-lg hover:shadow-yellow-500/10 hover:scale-105 transition-all duration-300 transform cursor-pointer text-xs uppercase tracking-widest flex items-center gap-2 mx-auto"
-          >
-            <BookOpen className="w-4 h-4" />
-            <span>Buka Undangan</span>
-          </button>
+          {/* Loading Percentage display */}
+          <div className="space-y-4 w-full max-w-[240px]">
+            <div className="flex flex-col items-center justify-center">
+              <span className="font-serif text-[56px] font-light leading-none tracking-tight text-white select-none">
+                {loadingPct}
+                <span className="text-red-650 text-2xl font-light align-baseline ml-0.5">%</span>
+              </span>
+            </div>
+
+            {/* Flat Red Loading indicator bar */}
+            <div className="w-full bg-neutral-900 h-1 rounded-full overflow-hidden border border-neutral-850">
+              <div 
+                className="h-full bg-red-650 transition-all duration-300" 
+                style={{ width: `${loadingPct}%` }}
+              />
+            </div>
+
+            {/* Rolling subtitles */}
+            <span className="text-[10px] tracking-[0.25em] font-extrabold text-slate-400 uppercase font-mono block animate-pulse">
+              MEMUTAR GULUNGAN KENANGAN
+            </span>
+          </div>
+
         </div>
       </div>
     );
   }
 
-  return (
-    <div className="relative pb-24 px-4 bg-gradient-to-b from-[#fbfaf7] via-[#f7f4ec] to-[#fbfaf7] text-slate-800">
-      <div className="max-w-3xl mx-auto space-y-16 py-12 relative">
-        
-        {/* Floating Heart Bubbles in BG */}
-        <div className="absolute top-24 left-1/4 w-12 h-12 bg-pink-100/30 rounded-full blur-xl pointer-events-none"></div>
-        <div className="absolute bottom-40 right-1/4 w-16 h-16 bg-yellow-100/30 rounded-full blur-xl pointer-events-none"></div>
+  if (!isOpen) {
+    const guestNameLabel = toGuest || 'Tamu Undangan';
 
-        {/* 1. HEADER HERO */}
-        <header className="text-center space-y-4">
-          <div className="text-pink-500 flex justify-center gap-1.5 mb-2">
-            <Heart className="w-4 h-4 fill-pink-500" />
-            <Heart className="w-4 h-4 fill-pink-500 scale-110" />
-            <Heart className="w-4 h-4 fill-pink-500" />
-          </div>
-          <p className="text-xs uppercase font-extrabold tracking-widest text-[#a17e3f]">Kabar Sukacita Pernikahan</p>
-          <h1 className="wedding-font-serif text-5xl font-bold tracking-wide text-gold-gradient py-1">
-            Hanum & Luthfi
-          </h1>
-          <div className="text-xs font-semibold text-slate-500 tracking-widest uppercase">
-            MINGGU, 13 SEPTEMBER 2026
-          </div>
-        </header>
+    if (coverStep === 1) {
+      // SCREEN 1: THE PREMIERE COVER VIEW WITH COUNTDOWN
+      return (
+        <div className="fixed inset-0 z-50 bg-[#070707] flex flex-col justify-between items-center text-white px-6 overflow-y-auto py-8 select-none">
+          {/* Portrait Backdrop Image */}
+          <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&q=80&w=1200')] bg-cover bg-center opacity-30 pointer-events-none z-0"></div>
+          <div className="absolute inset-0 bg-gradient-to-t from-[#0A0A0A] via-black/55 to-[#0A0A0A] pointer-events-none z-0"></div>
 
-        {/* 2. BRIDE & GROOM PROFILE */}
-        <section className="space-y-8">
-          <div className="text-center max-w-lg mx-auto">
-            <p className="text-xs italic leading-relaxed text-slate-500">
-              Assalamu’alaikum Warahmatullahi Wabarakatuh. Dengan memohon rahmat Allah SWT, kami mengundang Bapak/Ibu/Saudara/i untuk menghadiri resepsi pernikahan kami:
-            </p>
+          {/* Top Header Row */}
+          <div className="w-full flex justify-between items-center z-10 max-w-2xl border-b border-white/5 pb-4">
+            <span className="font-serif tracking-widest text-[#dfb76c] italic font-semibold text-lg hover:opacity-90 select-none">The Premiere</span>
+            <span className="text-[9px] tracking-[0.25em] font-medium text-slate-400 font-mono uppercase">TAMU UNDANGAN</span>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center pt-4">
+          {/* Centered Cover Contents */}
+          <div className="flex-1 flex flex-col justify-center items-center py-8 text-center space-y-6 z-10 max-w-xl w-full">
+            <span className="text-[9px] tracking-[0.3em] font-extrabold text-slate-400 uppercase font-mono block">🎬 A DIGITAL AUTEUR PRESENTATION</span>
             
-            {/* The Groom */}
-            <div className="liquid-glass-gold p-6 rounded-3xl text-center border border-white/80 shrink-0">
-              <div className="w-24 h-24 rounded-full overflow-hidden mx-auto border-2 border-amber-300 shadow-md">
-                <img 
-                  src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&q=80&w=150" 
-                  alt="Muhammad Luthfi" 
-                  className="w-full h-full object-cover"
-                  referrerPolicy="no-referrer"
-                />
-              </div>
-              <h3 className="wedding-font-serif text-xl font-bold text-[#906e2a] mt-4">Muhammad Luthfi, S.Pd.</h3>
-              <p className="text-[11px] text-slate-400 mt-1 uppercase font-bold tracking-wider">Muhammad Luthfi</p>
-              <p className="text-xs text-slate-500 mt-3 leading-relaxed">
-                Putra Kedua dari keluarga <br />
-                <strong>Bapak H. Abdurrahman</strong> & <br />
-                <strong>Ibu Hj. Aminah</strong> <br />
-                <span className="text-[10px] text-slate-400">(Bogor, Jawa Barat)</span>
-              </p>
-            </div>
+            <div className="w-10 h-[1.5px] bg-red-650/80 mx-auto"></div>
 
-            {/* The Bride */}
-            <div className="liquid-glass-gold p-6 rounded-3xl text-center border border-white/80 shrink-0">
-              <div className="w-24 h-24 rounded-full overflow-hidden mx-auto border-2 border-amber-300 shadow-md">
-                <img 
-                  src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=150" 
-                  alt="Siti Hanum Handayani" 
-                  className="w-full h-full object-cover"
-                  referrerPolicy="no-referrer"
-                />
-              </div>
-              <h3 className="wedding-font-serif text-xl font-bold text-[#906e2a] mt-4">Siti Hanum Handayani, S.Kom.</h3>
-              <p className="text-[11px] text-slate-400 mt-1 uppercase font-bold tracking-wider">Hanum</p>
-              <p className="text-xs text-slate-500 mt-3 leading-relaxed">
-                Putri Pertama dari keluarga <br />
-                <strong>Bapak H. Bambang Susilo</strong> & <br />
-                <strong>Ibu Hj. Hartati</strong> <br />
-                <span className="text-[10px] text-slate-400">(Bandung, Jawa Barat)</span>
-              </p>
-            </div>
-
-          </div>
-        </section>
-
-        {/* 3. LOVE STORY TIMELINE */}
-        <section className="space-y-8">
-          <div className="text-center">
-            <h2 className="wedding-font-serif text-2xl font-bold text-[#906e2a]">Perjalanan Cinta Kami</h2>
-            <p className="text-[11px] text-slate-400 uppercase tracking-widest mt-1">Our Story Timeline</p>
-          </div>
-
-          <div className="space-y-6 relative before:absolute before:left-4 before:top-2 before:bottom-2 before:w-0.5 before:bg-amber-200">
-            {[
-              {
-                time: 'September 2023 - Awal Berjumpa',
-                title: 'Kolaborasi Media Pembelajaran',
-                desc: 'Luthfi yang merupakan pendidik bertemu dengan Hanum, seorang developer IT, dalam projek pembuatan portal digitalisasi rapor. Diskusi pemrograman seketika berlanjut ke perkenalan pribadi.'
-              },
-              {
-                time: 'Oktober 2024 - Merumuskan Masa Depan',
-                title: 'Membangun Educita',
-                desc: 'Keduanya bersepakat mendirikan brand teknologi "Educita" untuk mengabdi ke dunia pendidikan. Kolaborasi ini semakin mempererat komitmen dan penyatuan nilai-nilai kehidupan.'
-              },
-              {
-                time: 'Mei 2025 - Pertemuan Keluarga',
-                title: 'Khitbah Resmi',
-                desc: 'Dengan restu penuh dari kedua belah orang tua, Luthfi memohon izin untuk mempersunting Hanum secara khidmat dan syar’i.'
-              }
-            ].map((story, i) => (
-              <div key={i} className="relative pl-8">
-                <div className="absolute left-1.5 top-1 w-5 h-5 rounded-full bg-[#fbfaf7] border-2 border-[#b89146] flex items-center justify-center">
-                  <Heart className="w-2.5 h-2.5 text-pink-500 fill-pink-500" />
-                </div>
-                <div className="text-[10px] font-extrabold text-[#906e2a] uppercase tracking-wider">{story.time}</div>
-                <h4 className="text-sm font-bold text-slate-800 mt-0.5">{story.title}</h4>
-                <p className="text-xs text-slate-500 mt-1 lines-relaxed leading-relaxed">{story.desc}</p>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        {/* 4. EVENT INFORMATION & REAL MAP */}
-        <section className="space-y-8">
-          <div className="text-center">
-            <h2 className="wedding-font-serif text-2xl font-bold text-[#906e2a]">Informasi Acara</h2>
-            <p className="text-[11px] text-slate-400 uppercase tracking-widest mt-1">Akad & Resepsi Nikah</p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {/* Akad Nikah */}
-            <div className="liquid-glass-gold p-6 rounded-3xl border border-white/60 relative">
-              <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center text-amber-700 mb-4 mx-auto">
-                <Users className="w-5 h-5" />
-              </div>
-              <h3 className="wedding-font-serif text-lg font-bold text-center text-[#906e2a]">Akad Nikah</h3>
-              
-              <div className="space-y-3 mt-4 text-xs text-slate-600">
-                <div className="flex items-center gap-2.5">
-                  <Calendar className="w-4 h-4 text-amber-600 shrink-0" />
-                  <span>Minggu, 13 September 2026</span>
-                </div>
-                <div className="flex items-center gap-2.5">
-                  <Clock className="w-4 h-4 text-amber-600 shrink-0" />
-                  <span>Pukul 08:00 - 10:00 WIB</span>
-                </div>
-                <div className="flex items-start gap-2.5">
-                  <MapPin className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
-                  <span>Masjid Agung Al-Fatih, Jl. Siliwangi No. 12, Bandung</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Resepsi Nikah */}
-            <div className="liquid-glass-gold p-6 rounded-3xl border border-white/60 relative">
-              <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center text-amber-700 mb-4 mx-auto">
-                <Users2 className="w-5 h-5" />
-              </div>
-              <h3 className="wedding-font-serif text-lg font-bold text-center text-[#906e2a]">Resepsi Nikah</h3>
-
-              <div className="space-y-3 mt-4 text-xs text-slate-600">
-                <div className="flex items-center gap-2.5">
-                  <Calendar className="w-4 h-4 text-amber-600 shrink-0" />
-                  <span>Minggu, 13 September 2026</span>
-                </div>
-                <div className="flex items-center gap-2.5">
-                  <Clock className="w-4 h-4 text-amber-600 shrink-0" />
-                  <span>Pukul 11:00 - 16:00 WIB</span>
-                </div>
-                <div className="flex items-start gap-2.5">
-                  <MapPin className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
-                  <span>Gedung Bale Pertiwi Indah, Raya Cipaganti, Bandung</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Interactive Simulated Google Map */}
-          <div className="liquid-glass rounded-3xl overflow-hidden border border-slate-200">
-            <div className="bg-slate-100 p-4 border-b border-slate-200 flex items-center justify-between text-xs">
-              <span className="font-bold flex items-center gap-1.5">
-                <Map className="w-4 h-4 text-emerald-600" />
-                <span>Navigasi Lokasi Peta</span>
+            <div className="space-y-1">
+              <span className="font-serif text-slate-350 italic text-base select-none block">
+                The Wedding <span className="text-red-550 font-semibold italic text-xl ml-1">of</span>
               </span>
-              <a 
-                href="https://maps.google.com" 
-                target="_blank" 
-                rel="noreferrer"
-                className="text-[10px] text-amber-800 font-extrabold uppercase hover:underline"
-              >
-                Buka G-Maps Asli
-              </a>
-            </div>
-            
-            <div className="h-64 bg-slate-200 flex flex-col items-center justify-center relative p-4 text-center">
-              {/* Virtual map illustration overlay */}
-              <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1524661135-423995f22d0b?auto=format&fit=crop&q=80&w=800')] bg-cover bg-center opacity-40"></div>
-              
-              <div className="relative z-10 glass-pill p-5 rounded-2xl max-w-sm border border-white/80">
-                <h4 className="text-xs font-bold text-slate-800">Gedung Bale Pertiwi Indah, Bandung</h4>
-                <p className="text-[10px] text-slate-500 mt-1 leading-relaxed">Gedung berada di samping Taman Cipaganti. Parkir luas untuk kendaraan bermotor dan roda empat.</p>
-                <div className="mt-3 flex items-center justify-center gap-2">
-                  <a 
-                    href="https://maps.google.com" 
-                    target="_blank" 
-                    rel="noreferrer" 
-                    className="px-3 py-1.5 bg-amber-600 text-white font-extrabold text-[10px] uppercase rounded-md shadow-sm block"
-                  >
-                    Petunjuk Arah
-                  </a>
-                  <button 
-                    onClick={() => handleCopy('-6.8934, 107.6045', 'koordinat')}
-                    className="px-3 py-1.5 bg-white text-slate-800 border border-slate-200 font-bold text-[10px] uppercase rounded-md shadow-sm"
-                  >
-                    {copiedAccount === 'koordinat' ? 'Tersalin!' : 'Copy GPS'}
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* 5. GUEST RSVP FORM */}
-        <section className="space-y-8">
-          <div className="text-center">
-            <h2 className="wedding-font-serif text-2xl font-bold text-[#906e2a]">Konfirmasi Kehadiran</h2>
-            <p className="text-[11px] text-slate-400 uppercase tracking-widest mt-1">Wedding RSVP</p>
-          </div>
-
-          <div className="liquid-glass-gold p-6 sm:p-8 rounded-3xl border border-white/85 text-[#816531]">
-            {rsvpSent ? (
-              <div className="text-center py-6">
-                <div className="w-12 h-12 bg-pink-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                  <Check className="w-6 h-6 text-pink-600" />
-                </div>
-                <h3 className="text-lg font-bold text-slate-800">Kehadiran Berhasil Dikonfirmasi!</h3>
-                <p className="text-xs text-slate-500 mt-1">Terima kasih atas konfirmasi Anda. Kehadiran Anda sangat berarti bagi kami berdua.</p>
-              </div>
-            ) : (
-              <form onSubmit={handleRSVPSubmit} className="space-y-4 text-slate-700">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-600 mb-1">Nama Tamu Undangan</label>
-                    <input 
-                      type="text" 
-                      className="w-full px-3 py-2 text-xs border border-[#cfbe9e] bg-white rounded-lg focus:outline-none focus:ring-1 focus:ring-amber-500"
-                      value={rsvpForm.name}
-                      onChange={(e) => setRsvpForm({...rsvpForm, name: e.target.value})}
-                      required
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-600 mb-1">Status Kehadiran</label>
-                    <select 
-                      className="w-full px-3 py-2 text-xs border border-[#cfbe9e] bg-white rounded-lg focus:outline-none focus:ring-1 focus:ring-amber-500"
-                      value={rsvpForm.attendance}
-                      onChange={(e) => setRsvpForm({...rsvpForm, attendance: e.target.value})}
-                    >
-                      <option value="hadir">Yth. Berkenan Hadir</option>
-                      <option value="belum_pasti">Masih Belum Pasti</option>
-                      <option value="tidak_hadir">Berhalangan Hadir</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-600 mb-1">Jumlah Tamu (Pax)</label>
-                    <input 
-                      type="number" 
-                      min={1} 
-                      max={4}
-                      className="w-full px-3 py-2 text-xs border border-[#cfbe9e] bg-white rounded-lg focus:outline-none focus:ring-1 focus:ring-amber-500"
-                      value={rsvpForm.guestsCount}
-                      onChange={(e) => setRsvpForm({...rsvpForm, guestsCount: Number(e.target.value)})}
-                      required
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-600 mb-1">Doa / Ucapan Singkat</label>
-                    <input 
-                      type="text" 
-                      placeholder="Tulis ucapan selamat..."
-                      className="w-full px-3 py-2 text-xs border border-[#cfbe9e] bg-white rounded-lg focus:outline-none focus:ring-1 focus:ring-amber-500"
-                      value={rsvpForm.wishes}
-                      onChange={(e) => setRsvpForm({...rsvpForm, wishes: e.target.value})}
-                    />
-                  </div>
-                </div>
-
-                <button 
-                  type="submit" 
-                  className="w-full py-2.5 rounded-xl bg-gradient-to-r from-[#dfb76c] to-[#b89146] text-slate-950 font-black tracking-widest text-[10px] uppercase cursor-pointer transition transform hover:-translate-y-0.5"
-                >
-                  Konfirmasi Kehadiran Saya
-                </button>
-              </form>
-            )}
-          </div>
-        </section>
-
-        {/* 6. GIFT BOX / WEDDING CASHLESS */}
-        <section className="space-y-8">
-          <div className="text-center">
-            <h2 className="wedding-font-serif text-2xl font-bold text-[#906e2a]">Wedding Gift</h2>
-            <p className="text-[11px] text-slate-400 uppercase tracking-widest mt-1">Dompet Digital Berkah</p>
-          </div>
-
-          <div className="liquid-glass p-6 sm:p-8 rounded-3xl border border-white/60 text-center max-w-md mx-auto">
-            <div className="w-10 h-10 bg-amber-50 text-[#906e2a] rounded-full flex items-center justify-center mx-auto mb-3">
-              <Gift className="w-5 h-5" />
-            </div>
-            <h3 className="text-sm font-bold text-slate-800">Kirim Tanda Kasih Digital</h3>
-            <p className="text-[11px] text-slate-500 mt-1 leading-relaxed">
-              Doa restu Anda adalah karunia terindah. Namun jika ingin memberikan kado digital cashless pelengkap rukun keluarga baru kami, silakan gunakan akun berikut:
-            </p>
-
-            <div className="mt-6 space-y-4">
-              {/* Account 1 */}
-              <div className="p-4 rounded-2xl bg-amber-50/50 border border-amber-200/40 relative text-left">
-                <div className="text-[10px] uppercase tracking-wider font-extrabold text-amber-800">BANK MANDIRI</div>
-                <div className="text-sm font-bold text-slate-800 mt-1">123-000-4567-890</div>
-                <div className="text-[10px] text-slate-400">a.n. Muhammad Luthfi</div>
-                
-                <button 
-                  onClick={() => handleCopy('1230004567890', 'mandiri')}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 px-2.5 py-1.5 rounded bg-white border border-slate-200 text-[10px] font-bold text-slate-600 hover:bg-slate-50 flex items-center gap-1 shadow-sm"
-                >
-                  {copiedAccount === 'mandiri' ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3" />}
-                  <span>{copiedAccount === 'mandiri' ? 'Selesai' : 'Copy'}</span>
-                </button>
-              </div>
-
-              {/* Account 2 */}
-              <div className="p-4 rounded-2xl bg-amber-50/50 border border-amber-200/40 relative text-left">
-                <div className="text-[10px] uppercase tracking-wider font-extrabold text-amber-800">BANK BCA</div>
-                <div className="text-sm font-bold text-slate-800 mt-1">860-0123-456</div>
-                <div className="text-[10px] text-slate-400">a.n. Siti Hanum Handayani</div>
-
-                <button 
-                  onClick={() => handleCopy('8600123456', 'bca')}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 px-2.5 py-1.5 rounded bg-white border border-slate-200 text-[10px] font-bold text-slate-600 hover:bg-slate-50 flex items-center gap-1 shadow-sm"
-                >
-                  {copiedAccount === 'bca' ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3" />}
-                  <span>{copiedAccount === 'bca' ? 'Selesai' : 'Copy'}</span>
-                </button>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* 7. LIVE INTERACTIVE GUEST BOOK */}
-        <section className="space-y-8">
-          <div className="text-center">
-            <h2 className="wedding-font-serif text-2xl font-bold text-[#906e2a]">Buku Tamu Digital</h2>
-            <p className="text-[11px] text-slate-400 uppercase tracking-widest mt-1">Doa, Keberkahan, & Ucapan</p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
-            
-            {/* Form writing */}
-            <div className="md:col-span-5 liquid-glass-gold p-5 rounded-3xl border border-white/60 h-fit text-slate-700">
-              <h3 className="text-xs font-black uppercase tracking-widest text-[#906e2a] mb-4">Kirim Doa Restu</h3>
-              
-              <form onSubmit={handleMessageSubmit} className="space-y-3">
-                <div>
-                  <input 
-                    type="text" 
-                    placeholder="Nama Anda" 
-                    className="w-full px-3 py-2 text-xs border border-[#cfbe9e] bg-white rounded-lg focus:outline-none focus:ring-1 focus:ring-amber-500"
-                    value={newMessage.name}
-                    onChange={(e) => setNewMessage({...newMessage, name: e.target.value})}
-                    required
-                  />
-                </div>
-
-                <div>
-                  <select 
-                    className="w-full px-3 py-2 text-xs border border-[#cfbe9e] bg-white rounded-lg focus:outline-none focus:ring-1 focus:ring-amber-500"
-                    value={newMessage.relation}
-                    onChange={(e) => setNewMessage({...newMessage, relation: e.target.value})}
-                  >
-                    <option value="Sahabat">Kerabat Dekat / Sahabat</option>
-                    <option value="Keluarga">Keluarga Kandung/Besar</option>
-                    <option value="Rekan Kerja">Rekan Kerja Sekolah</option>
-                    <option value="Tamu">Tamu Terhormat</option>
-                  </select>
-                </div>
-
-                <div>
-                  <textarea 
-                    rows={3} 
-                    placeholder="Tuliskan barakah doa & restu Anda untuk Luthfi-Hanum..." 
-                    className="w-full px-3 py-2 text-xs border border-[#cfbe9e] bg-white rounded-lg focus:outline-none focus:ring-1 focus:ring-amber-500"
-                    value={newMessage.message}
-                    onChange={(e) => setNewMessage({...newMessage, message: e.target.value})}
-                    required
-                  />
-                </div>
-
-                <button 
-                  type="submit" 
-                  className="w-full py-2 bg-amber-700 hover:bg-amber-800 text-white font-bold text-xs rounded-lg cursor-pointer"
-                >
-                  Kirim Doa Berkah
-                </button>
-              </form>
+              <h1 className="font-serif text-3xl sm:text-4xl font-semibold tracking-wide text-white leading-relaxed mt-1">
+                Muhammad Luthfi, S.Pd.
+              </h1>
+              <div className="font-serif text-[#dfb76c] text-xl">&</div>
+              <h1 className="font-serif text-3xl sm:text-4xl font-semibold tracking-wide text-white leading-relaxed">
+                Hanum Muftiani, S.Kom.
+              </h1>
             </div>
 
-            {/* Read Message logs scrolling */}
-            <div className="md:col-span-7 space-y-3 max-h-[380px] overflow-y-auto pr-2">
-              {guestBook.map((gb) => (
-                <div key={gb.id} className="bg-white/75 p-4 rounded-2xl border border-slate-200/50 shadow-sm flex gap-3 text-left">
-                  <div className="w-8 h-8 rounded-full bg-amber-50 flex items-center justify-center shrink-0 border border-amber-100 text-[#906e2a] font-bold text-xs">
-                    {gb.name.charAt(0).toUpperCase()}
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs font-bold text-slate-800">{gb.name}</span>
-                      <span className="text-[9px] bg-slate-100 text-slate-400 px-1.5 py-0.5 rounded-full font-semibold">{gb.relation}</span>
+            <div className="text-[10px] tracking-[0.25em] font-bold text-slate-400 font-mono">07.06.2026</div>
+
+            {/* Row of Countdown cards */}
+            <div className="flex gap-2.5 justify-center items-center pt-4 select-none">
+              {['HARI', 'JAM', 'MENIT', 'DETIK'].map((lbl, idx) => {
+                const val = idx === 0 ? timeLeft.days : idx === 1 ? timeLeft.hours : idx === 2 ? timeLeft.minutes : timeLeft.seconds;
+                return (
+                  <div key={lbl} className="flex flex-col items-center">
+                    <div className="w-14 h-14 rounded-xl bg-black/65 border border-neutral-850 flex items-center justify-center shadow-2xl">
+                      <span className="text-xl font-bold font-mono text-white">{String(val).padStart(2, '0')}</span>
                     </div>
-                    <p className="text-xs text-slate-600 mt-1 italic font-medium leading-relaxed">
-                      "{gb.message}"
-                    </p>
-                    <span className="text-[9px] text-slate-400 block mt-2">{new Date(gb.createdAt).toLocaleDateString('id-ID')}</span>
+                    <span className="text-[8px] text-slate-500 font-bold uppercase tracking-wider mt-2 font-mono">{lbl}</span>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Sparkle Red Check-In Pill Button */}
+            <button 
+              id="btn-open-check-in"
+              onClick={() => {
+                setCoverStep(2);
+                if (settings?.backgroundMusicUrl && !audioRef.current) {
+                  const audio = new Audio(settings.backgroundMusicUrl);
+                  audio.loop = true;
+                  audioRef.current = audio;
+                }
+              }}
+              className="w-full max-w-[200px] mt-8 py-3.5 rounded-full bg-red-650 hover:bg-red-750 font-extrabold uppercase tracking-widest text-[11px] cursor-pointer shadow-lg shadow-red-950/40 border border-red-700/50 flex items-center justify-center gap-2 transform active:scale-95 transition-all duration-200"
+            >
+              <Sparkles className="w-4 h-4 text-[#dfb76c] fill-[#dfb76c]/40 animate-pulse" />
+              <span>CHECK IN</span>
+            </button>
+
+            <span className="text-[8.5px] tracking-[0.18em] text-slate-500 font-medium font-mono uppercase block mt-3">
+              DISEDIAKAN UNTUK TAMU UNDANGAN
+            </span>
+          </div>
+
+          {/* Footer Chevron down indicators */}
+          <div className="py-4 z-10 animate-bounce flex flex-col items-center justify-center">
+            <ChevronLeft className="w-4 h-4 text-slate-600 transform rotate-270" />
+          </div>
+        </div>
+      );
+    } else {
+      // SCREEN 2: PICK GUEST ACCESS PROFILE (AVATAR MULTI-PROFILE SELECTION)
+      const prevIdx = (selectedProfileIdx - 1 + PROFILE_TEMPLATES.length) % PROFILE_TEMPLATES.length;
+      const nextIdx = (selectedProfileIdx + 1) % PROFILE_TEMPLATES.length;
+      const activeProfiler = PROFILE_TEMPLATES[selectedProfileIdx];
+
+      return (
+        <div className="fixed inset-0 z-50 bg-[#070707] flex flex-col justify-between items-center text-white px-6 overflow-y-auto py-8 select-none">
+          
+          {/* Top Header */}
+          <div className="w-full flex justify-between items-center z-10 max-w-2xl border-b border-white/5 pb-4">
+            <span className="text-[9px] tracking-[0.25em] font-black text-red-550 font-mono uppercase">THE WEDDING PREMIERE</span>
+            <span className="text-[9px] tracking-[0.2em] font-mono uppercase text-slate-400">SELECT ACCESS PROFILE</span>
+          </div>
+
+          {/* Central Carousel block */}
+          <div className="flex-1 flex flex-col justify-center items-center py-6 text-center space-y-8 z-10 max-w-md w-full">
+            <div className="space-y-4">
+              <h2 className="font-serif text-2xl text-[#dfb76c] font-semibold">Pilih Profil Tamu Anda</h2>
+              <p className="text-[11.5px] text-slate-450 max-w-xs mx-auto leading-relaxed">
+                Selamat datang, <span className="text-red-500 font-bold italic">Tamu Undangan</span>! Geser untuk memilih profil yang paling mewakili Anda.
+              </p>
+            </div>
+
+            {/* Slider Row */}
+            <div className="flex items-center justify-center gap-6 my-2 w-full">
+              {/* Left arrow */}
+              <button 
+                onClick={() => setSelectedProfileIdx(p => (p - 1 + PROFILE_TEMPLATES.length) % PROFILE_TEMPLATES.length)}
+                className="w-10 h-10 rounded-full border border-slate-850 bg-slate-900/40 hover:bg-slate-800 text-slate-400 flex items-center justify-center cursor-pointer active:scale-95 transition shrink-0"
+              >
+                <ChevronLeft className="w-5 h-5" />
+              </button>
+
+              {/* 3 Circular items row representation */}
+              <div className="flex items-center gap-5 justify-center">
+                {/* Previous circle index (Grayscale, hidden on small screens) */}
+                <div className="hidden sm:flex flex-col items-center opacity-15 scale-75 filter grayscale transition-all duration-300">
+                  <div className="w-16 h-16 rounded-full border border-slate-850 bg-slate-950 flex items-center justify-center text-2xl">
+                    {PROFILE_TEMPLATES[prevIdx].char}
+                  </div>
+                  <span className="text-[9px] text-slate-500 font-mono mt-1.5 font-bold">{PROFILE_TEMPLATES[prevIdx].name}</span>
+                </div>
+
+                {/* Central active glowing profile circle */}
+                <div className="flex flex-col items-center scale-110 duration-300 select-none">
+                  <div className="relative">
+                    {/* Glowing outer backdrop */}
+                    <div className="absolute -inset-2.5 bg-gradient-to-tr from-red-650 via-[#dfb76c]/40 to-red-650 rounded-full blur-md opacity-75 animate-pulse"></div>
+                    
+                    <div className={`relative w-24 h-24 rounded-full border-2 bg-gradient-to-b ${activeProfiler.color} flex items-center justify-center text-4xl shadow-2xl`}>
+                      {activeProfiler.char}
+                    </div>
+                    
+                    {/* Gold sparkle mini badge */}
+                    <div className="absolute -top-1 -right-1 bg-red-650 p-1 rounded-full text-white shadow-md border border-red-500">
+                      <Sparkles className="w-3.5 h-3.5 text-[#dfb76c] fill-[#dfb76c]/20" />
+                    </div>
                   </div>
                 </div>
+
+                {/* Next circle index (Grayscale, hidden on small screens) */}
+                <div className="hidden sm:flex flex-col items-center opacity-15 scale-75 filter grayscale transition-all duration-300">
+                  <div className="w-16 h-16 rounded-full border border-slate-850 bg-slate-950 flex items-center justify-center text-2xl">
+                    {PROFILE_TEMPLATES[nextIdx].char}
+                  </div>
+                  <span className="text-[9px] text-slate-500 font-mono mt-1.5 font-bold">{PROFILE_TEMPLATES[nextIdx].name}</span>
+                </div>
+              </div>
+
+              {/* Right arrow */}
+              <button 
+                onClick={() => setSelectedProfileIdx(p => (p + 1) % PROFILE_TEMPLATES.length)}
+                className="w-10 h-10 rounded-full border border-slate-850 bg-slate-900/40 hover:bg-slate-800 text-slate-400 flex items-center justify-center cursor-pointer active:scale-95 transition shrink-0"
+              >
+                <ChevronRight className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Selected labels details */}
+            <div className="text-center space-y-1.5 pt-2">
+              <h3 className="font-serif text-xl font-bold tracking-wide text-white">{activeProfiler.name}</h3>
+              <span className="text-[10px] tracking-[0.25em] font-mono font-extrabold text-red-500 block uppercase">{activeProfiler.label}</span>
+            </div>
+
+            {/* Slider Dots */}
+            <div className="flex gap-2 justify-center py-1">
+              {PROFILE_TEMPLATES.map((_, dotIdx) => (
+                <button
+                  key={dotIdx}
+                  onClick={() => setSelectedProfileIdx(dotIdx)}
+                  className={`h-1.5 rounded-full transition-all duration-350 ${
+                    dotIdx === selectedProfileIdx ? 'w-5 bg-red-650' : 'w-1.5 bg-neutral-800 hover:bg-neutral-750'
+                  }`}
+                />
               ))}
             </div>
 
+            {/* Back to cover and Confirm Buttons row */}
+            <div className="w-full flex flex-col items-center gap-3 pt-4">
+              <button 
+                onClick={() => {
+                  setSelectedAvatar(activeProfiler.char);
+                  setSelectedProfileName(activeProfiler.name);
+                  setCustomAvatarUrl('');
+                  setIsMovieLoading(true);
+                }}
+                className="w-full max-w-[220px] py-3.5 px-6 rounded-full bg-red-650 hover:bg-red-750 select-none cursor-pointer flex items-center justify-center gap-2 text-white font-extrabold uppercase tracking-widest text-[11px] shadow-lg border border-red-700/40 active:scale-95 transition-all duration-200"
+              >
+                <Sparkles className="w-4 h-4 text-[#dfb76c] animate-pulse" />
+                <span>KONFIRMASI</span>
+                <ChevronRight className="w-4 h-4 text-white" />
+              </button>
+
+              <button 
+                onClick={() => setCoverStep(1)}
+                className="text-[9px] font-mono tracking-[0.2em] font-bold text-neutral-500 hover:text-white uppercase transition"
+              >
+                Kembali ke Cover
+              </button>
+            </div>
+
           </div>
-        </section>
+
+          <div className="py-4 z-10 text-[9px] text-neutral-600 font-mono">
+            SECURE ADMISSION SYSTEM v1.3
+          </div>
+        </div>
+      );
+    }
+  }
+
+  // ==========================================
+  // VIEW 2: FULL IMMERSIVE WEDDING SITE
+  // ==========================================
+  return (
+    <div className="relative min-h-screen pb-32 bg-[#070707] text-[#eeeff2] font-sans">
+
+      {/* Floating Buttons: Mail and Vinyl, at bottom right */}
+      <div className="fixed bottom-24 right-5 sm:right-8 z-40 flex flex-col items-center gap-3">
+        {/* Floating Mail Guestbook Shortcut */}
+        <button
+          onClick={() => {
+            const rsvpSection = document.getElementById('rsvp-section');
+            if (rsvpSection) {
+              rsvpSection.scrollIntoView({ behavior: 'smooth' });
+            }
+          }}
+          className="w-12 h-12 rounded-full bg-neutral-950 border border-neutral-800 text-white flex items-center justify-center hover:scale-105 shadow-xl transition active:scale-95 cursor-pointer group"
+          title="Tulis Ucapan & Doa"
+        >
+          <div className="relative p-1.5 rounded-full border border-red-800/25 group-hover:border-red-600/45 transition">
+            <Send className="w-4 h-4 text-slate-300" />
+          </div>
+        </button>
+
+        {/* Floating Vinyl player audio control */}
+        <button
+          onClick={toggleMusic}
+          className={`w-12 h-12 rounded-full border-2 bg-neutral-950 flex items-center justify-center hover:scale-105 shadow-xl transition active:scale-95 cursor-pointer relative overflow-hidden group ${
+            isMusicPlaying ? 'border-red-700 animate-[spin_8s_linear_infinite]' : 'border-neutral-800'
+          }`}
+          title="Putar Musik Backsound"
+        >
+          <div className="absolute inset-2.5 border border-dashed border-neutral-800/80 rounded-full"></div>
+          <div className="relative w-4 h-4 bg-[#821E1E] rounded-full flex items-center justify-center text-[8px] text-[#dfb76c]">
+            {isMusicPlaying ? '●' : '✕'}
+          </div>
+        </button>
+      </div>
+
+      {/* Sticky Bottom Red Ticket CTA Bar */}
+      <div className="fixed bottom-0 inset-x-0 bg-gradient-to-t from-black via-black/90 to-transparent p-4 z-40 flex justify-center pointer-events-none md:max-w-3xl md:mx-auto">
+        <button
+          onClick={() => {
+            const rsvpSection = document.getElementById('rsvp-section');
+            if (rsvpSection) {
+              rsvpSection.scrollIntoView({ behavior: 'smooth' });
+            }
+          }}
+          className="pointer-events-auto w-full max-w-md py-4 bg-[#821E1E] hover:bg-red-700 text-white font-extrabold uppercase tracking-widest text-xs rounded-2xl shadow-xl flex items-center justify-center gap-2 transform active:scale-95 transition-all duration-200 border border-red-650"
+        >
+          <Ticket className="w-4 h-4 text-[#dfb76c] fill-[#dfb76c]/20 animate-pulse" />
+          <span>DAPATKAN TIKET ANDA</span>
+        </button>
+      </div>
+
+      {/* Sticky Header Top Bar of The Premiere */}
+      <div className="sticky top-0 bg-[#070707]/90 backdrop-blur-md z-40 border-b border-white/5 py-4 px-6 flex justify-between items-center w-full max-w-3xl mx-auto">
+        <span className="font-serif tracking-widest text-[#dfb76c] italic font-semibold text-lg select-none">The Premiere</span>
+        <div className="flex items-center gap-3">
+          <button className="p-2 rounded-full bg-neutral-900 border border-neutral-800 text-[#dfb76c] hover:bg-neutral-800 transition">
+            <Sparkle className="w-4 h-4 animate-spin-slow text-[#dfb76c]" />
+          </button>
+          <button 
+            onClick={() => {
+              const giftSection = document.getElementById('gift-section');
+              if (giftSection) {
+                giftSection.scrollIntoView({ behavior: 'smooth' });
+              }
+            }}
+            className="p-2 rounded-full bg-red-950/40 border border-red-900/60 text-[#dfb76c] hover:bg-red-900/60 transition"
+          >
+            <Gift className="w-4 h-4" />
+          </button>
+          <div className="w-8 h-8 rounded-full border border-neutral-800 overflow-hidden bg-slate-950 flex items-center justify-center text-sm">
+            {selectedAvatar}
+          </div>
+        </div>
+      </div>
+
+      {/* Interactive Review Modal Pop-up Popup-Details (Image 7) */}
+      {selectedReview && (
+        <div className="fixed inset-0 bg-[#070707]/90 backdrop-blur-sm flex items-center justify-center z-50 p-6 overflow-y-auto">
+          <div className="bg-neutral-900 border border-neutral-800 rounded-[32px] p-6 text-[#eeeff2] relative space-y-6 max-w-md w-full shadow-2xl animate-[fadeIn_0.25s_ease-out]">
+            <button 
+              onClick={() => setSelectedReview(null)}
+              className="absolute top-5 right-5 w-8 h-8 rounded-full bg-neutral-950 border border-neutral-800 text-neutral-400 flex items-center justify-center hover:bg-neutral-850 hover:text-white transition cursor-pointer"
+            >
+              ✕
+            </button>
+
+            {/* Friend Details Header */}
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-full border-2 border-[#821E1E]/40 bg-neutral-950 flex items-center justify-center text-2xl shadow-md select-none">
+                {selectedReview.avatar}
+              </div>
+              <div>
+                <h4 className="font-bold text-white text-sm">{selectedReview.fullName}</h4>
+                <div className="flex items-center gap-1.5 mt-0.5 font-mono text-[8px] uppercase font-bold text-stone-500 tracking-wider">
+                  <span>{selectedReview.time}</span>
+                  <span>•</span>
+                  <span className="text-red-500 font-extrabold uppercase">TAMU SAHABAT</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Quote of message */}
+            <div className="space-y-1">
+              <p className="text-center text-sm italic font-serif leading-relaxed text-slate-100 max-w-xs mx-auto">
+                "{selectedReview.message}"
+              </p>
+            </div>
+
+            {/* Bride reply sub-card */}
+            <div className="bg-neutral-950/80 rounded-2xl p-4 border border-[#dfb76c]/10 relative space-y-1.5">
+              <div className="flex items-center gap-1.5 text-[8.5px] uppercase font-mono tracking-widest text-[#dfb76c] font-black">
+                <Sparkles className="w-3.5 h-3.5 text-[#dfb76c]" />
+                <span>✨ BALASAN HANGAT MEMPELAI</span>
+              </div>
+              <p className="text-[11px] text-stone-300 leading-relaxed font-sans">
+                {selectedReview.reply}
+              </p>
+            </div>
+
+            {/* Rating Box */}
+            <div className="p-3.5 rounded-xl border border-neutral-800 bg-neutral-950/50 flex flex-col justify-center items-center space-y-2">
+              <div className="w-full flex justify-between items-center text-[8.5px] uppercase font-mono tracking-widest text-stone-500 font-extrabold pb-1.5 border-b border-white/5">
+                <span>RATING DOA &amp; SKALA FAVORIT</span>
+                <span className="text-white font-black">{selectedReview.rating}</span>
+              </div>
+              
+              <div className="flex items-center gap-1 text-[#dfb76c]">
+                {Array.from({ length: 5 }).map((_, sIdx) => (
+                  <span key={sIdx} className="text-lg">★</span>
+                ))}
+              </div>
+
+              <div className="w-full flex justify-between items-center text-[8.5px] uppercase font-mono text-stone-500 font-extrabold pt-1">
+                <span className="text-red-500 flex items-center gap-1 font-bold">♥ SKALA FAVORIT: FAVORIT KAMI</span>
+                <span>👁 PENAYANGAN: {selectedReview.views}</span>
+              </div>
+            </div>
+
+            {/* Tag information label */}
+            <div className="text-center space-y-1">
+              <span className="text-[8.5px] text-[#dfb76c] tracking-widest font-mono font-bold uppercase block">
+                TAG KAMI @HANUMLUTHFI UNTUK KESEMPATAN DITAMPILKAN!
+              </span>
+            </div>
+
+            {/* Red button capsule */}
+            <button
+              onClick={() => setSelectedReview(null)}
+              className="w-full py-3.5 bg-[#821E1E] hover:bg-rose-700 text-white font-extrabold uppercase tracking-widest text-xs rounded-full shadow-lg border border-red-700/40 active:scale-95 transition-all duration-200 cursor-pointer"
+            >
+              TUTUP
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Decorative background overlays */}
+      <div className="absolute top-[800px] left-1/4 w-72 h-72 bg-red-950/20 rounded-full blur-3xl pointer-events-none opacity-20 animate-pulse"></div>
+      <div className="absolute top-[1800px] right-1/4 w-80 h-80 bg-[#dfb76c]/5 rounded-full blur-3xl pointer-events-none opacity-20"></div>
+
+      {/* Content wrapper */}
+      <div id="premiere-content" className="max-w-3xl mx-auto px-4 md:px-0 pt-6 space-y-20 relative">
+        
+        {/* Render each dynamic section in order */}
+        {sections.filter(s => s.isEnabled).map((sec) => {
+          
+          // ==========================================
+          // 2.A SECTION TYPE: COVER BANNER
+          // ==========================================
+          if (sec.type === 'cover') {
+            return (
+              <section key={sec.id} className="relative w-full rounded-[36px] overflow-hidden text-center space-y-6 pt-4 border border-white/5 bg-neutral-950/40 shadow-2xl py-8">
+                <div className="space-y-2">
+                  <span className="text-[9px] tracking-[0.3em] font-extrabold text-neutral-400 uppercase font-mono block">
+                    A DIGITAL AUTEUR PRESENTATION
+                  </span>
+                  <div className="flex items-center justify-center gap-1">
+                    <div className="h-[1px] w-6 bg-red-700"></div>
+                    <Heart className="w-3.5 h-3.5 text-red-650 fill-red-650" />
+                    <div className="h-[1px] w-6 bg-red-700"></div>
+                  </div>
+                </div>
+
+                {/* Main Film Poster Portrait Frame */}
+                <div className="relative w-full max-w-sm mx-auto aspect-[3/4] rounded-3xl overflow-hidden border border-neutral-800 shadow-[0_15px_35px_rgba(0,0,0,0.8)]">
+                  <img 
+                    src="https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&q=80&w=800"
+                    alt="Theatrical Cover Prewedding" 
+                    className="w-full h-full object-cover opacity-80"
+                    referrerPolicy="no-referrer"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#0A0A0A] via-black/30 to-[#0A0A0A]/40"></div>
+
+                  <div className="absolute inset-x-4 bottom-8 space-y-3">
+                    <span className="text-[9px] tracking-[0.25em] font-extrabold text-neutral-400 uppercase font-mono block">
+                      THE WEDDING OF
+                    </span>
+                    
+                    <div className="space-y-1">
+                      <h2 className="font-serif text-2xl sm:text-3xl font-bold tracking-wide text-white leading-tight">
+                        {settings?.coupleDisplayTitle || 'Hanum & Luthfi'}
+                      </h2>
+                      <p className="text-[9.5px] text-stone-300 tracking-wider">
+                        Muhammad Luthfi, S.Pd. &amp; Hanum Muftiani, S.Kom.
+                      </p>
+                    </div>
+
+                    <div className="w-8 h-[1px] bg-red-700 mx-auto my-1"></div>
+
+                    <p className="text-[8px] text-slate-400 max-w-xs mx-auto leading-relaxed font-mono">
+                      PUTRA DARI BAPAK H. ABDURRAHMAN &amp; IBU HJ. AMINAH
+                      <br />
+                      &amp;
+                      <br />
+                      PUTRI PERTAMA DARI BAPAK H. BAMBANG SUSILO &amp; IBU HJ. HARTATI
+                    </p>
+                  </div>
+
+                  {/* Floating track label */}
+                  <div className="absolute right-4 top-4 bg-black/60 backdrop-blur-md border border-neutral-800 px-3 py-1 rounded-full text-[7.5px] text-stone-400 font-mono tracking-widest flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 bg-red-650 rounded-full animate-ping"></span>
+                    <span>♫ Kisah Abadi</span>
+                  </div>
+                </div>
+
+                <div className="max-w-md mx-auto p-4 bg-gradient-to-tr from-neutral-900 to-neutral-950/40 rounded-2xl border border-[#dfb76c]/10 shadow-md text-left font-mono relative overflow-hidden select-none">
+                  <div className="absolute right-4 bottom-4 text-5xl opacity-5 pointer-events-none">{selectedAvatar}</div>
+                  
+                  <div className="flex items-center justify-between gap-4">
+                    <div className="space-y-1">
+                      <span className="text-[7px] text-red-500 font-extrabold tracking-[0.2em] block uppercase font-mono">CINEMA GATEKEEPER PASS</span>
+                      <h4 className="text-xs font-bold font-sans text-white flex items-center gap-1.5 pt-0.5">
+                        <span className="text-sm">{selectedAvatar}</span>
+                        <span>{toGuest ? toGuest : 'Tamu Undangan'}</span>
+                      </h4>
+                      <span className="text-[7.5px] text-stone-400 block tracking-wider pt-0.5">Hadir Sebagai: <strong className="text-stone-200 font-bold">{selectedProfileName}</strong></span>
+                    </div>
+                    
+                    <div className="text-right shrink-0">
+                      <span className="text-[7px] text-stone-500 block uppercase tracking-widest font-bold">VIP SEAT PASS</span>
+                      <span className="text-10px text-[#dfb76c] font-black">{myTicket ? myTicket.seatNumber : 'VIP-A11'}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Event Countdown Timers block */}
+                <div className="grid grid-cols-4 gap-2.5 max-w-sm mx-auto font-mono text-[#dfb76c] font-bold bg-[#0f0f0f] border border-white/5 p-3.5 rounded-2xl shadow-xl">
+                  <div className="bg-neutral-950 border border-neutral-900 rounded-xl p-2.5 flex flex-col justify-center items-center">
+                    <span className="text-xl font-black text-white">{timeLeft.days}</span>
+                    <span className="text-[7px] text-stone-500 font-bold uppercase tracking-wider mt-1">HARI</span>
+                  </div>
+                  <div className="bg-neutral-950 border border-neutral-900 rounded-xl p-2.5 flex flex-col justify-center items-center">
+                    <span className="text-xl font-black text-white">{timeLeft.hours}</span>
+                    <span className="text-[7px] text-stone-500 font-bold uppercase tracking-wider mt-1">JAM</span>
+                  </div>
+                  <div className="bg-neutral-950 border border-neutral-900 rounded-xl p-2.5 flex flex-col justify-center items-center">
+                    <span className="text-xl font-black text-white">{timeLeft.minutes}</span>
+                    <span className="text-[7px] text-stone-500 font-bold uppercase tracking-wider mt-1">MENIT</span>
+                  </div>
+                  <div className="bg-neutral-950 border border-neutral-900 rounded-xl p-2.5 flex flex-col justify-center items-center">
+                    <span className="text-xl font-black text-white">{timeLeft.seconds}</span>
+                    <span className="text-[7px] text-stone-500 font-bold uppercase tracking-wider mt-1">DETIK</span>
+                  </div>
+                </div>
+              </section>
+            );
+          }
+
+          if (sec.type === 'movie_poster') {
+            return (
+              <section key={sec.id} className="space-y-6">
+                <div className="flex items-end justify-between border-b border-white/5 pb-2">
+                  <div>
+                    <span className="text-[10px] text-stone-500 font-bold uppercase tracking-wider block font-mono">NOW SHOWING</span>
+                    <h3 className="text-2xl font-serif text-white font-black mt-1">Kisah Cinta Kami</h3>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <button 
+                      onClick={() => {
+                        setCarouselIdx(p => (p - 1 + CINEMATIC_CHAPTERS.length) % CINEMATIC_CHAPTERS.length);
+                        setVideoPlaying(false);
+                      }}
+                      className="w-10 h-10 rounded-full bg-neutral-900 border border-neutral-800 flex items-center justify-center hover:bg-neutral-850 active:scale-95 transition text-stone-400 hover:text-white"
+                    >
+                      <ChevronLeft className="w-5 h-5" />
+                    </button>
+                    <button 
+                      onClick={() => {
+                        setCarouselIdx(p => (p + 1) % CINEMATIC_CHAPTERS.length);
+                        setVideoPlaying(false);
+                      }}
+                      className="w-10 h-10 rounded-full bg-neutral-900 border border-neutral-800 flex items-center justify-center hover:bg-neutral-850 active:scale-95 transition text-stone-400 hover:text-white"
+                    >
+                      <ChevronRight className="w-5 h-5" />
+                    </button>
+                  </div>
+                </div>
+
+                {/* 3D stacked movie poster carousel container */}
+                <div className="relative w-full overflow-hidden py-4 select-none">
+                  <div className="flex justify-center items-center h-[340px] relative">
+                    {CINEMATIC_CHAPTERS.map((chap, idx) => {
+                      const offset = idx - carouselIdx;
+                      const isActive = idx === carouselIdx;
+                      
+                      if (Math.abs(offset) > 2) return null;
+
+                      let styleClass = "";
+                      if (isActive) {
+                        styleClass = "scale-100 z-30 opacity-100 translate-x-0 pointer-events-auto border-2 border-[#dfb76c] shadow-[0_0_35px_rgba(130,30,30,0.6)]";
+                      } else if (offset === -1) {
+                        styleClass = "scale-80 z-20 opacity-50 -translate-x-[110px] sm:-translate-x-[150px] pointer-events-none";
+                      } else if (offset === 1) {
+                        styleClass = "scale-80 z-20 opacity-50 translate-x-[110px] sm:translate-x-[150px] pointer-events-none";
+                      } else if (offset === -2) {
+                        styleClass = "scale-65 z-10 opacity-20 -translate-x-[170px] sm:-translate-x-[230px] pointer-events-none";
+                      } else if (offset === 2) {
+                        styleClass = "scale-65 z-10 opacity-20 translate-x-[170px] sm:translate-x-[230px] pointer-events-none";
+                      }
+
+                      return (
+                        <div
+                          key={chap.title}
+                          className={`absolute w-[185px] h-[265px] sm:w-[220px] sm:h-[310px] rounded-[24px] overflow-hidden transition-all duration-500 ease-out flex flex-col justify-between p-4 bg-neutral-900 ${styleClass}`}
+                        >
+                          {/* Poster Background */}
+                          <div className="absolute inset-0 z-0">
+                            <img src={chap.image} alt={chap.title} className="w-full h-full object-cover opacity-75" referrerPolicy="no-referrer" />
+                            <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent"></div>
+                          </div>
+
+                          {/* Header badge inside card */}
+                          <div className="z-10 bg-black/60 backdrop-blur-xs px-2.5 py-1 rounded-full border border-white/5 w-fit text-[7.5px] tracking-wider uppercase font-mono font-black text-[#dfb76c]">
+                            {chap.subtitle}
+                          </div>
+
+                          {/* Center Play button */}
+                          {isActive && (
+                            <div className="z-10 absolute inset-0 flex items-center justify-center">
+                              <button 
+                                onClick={() => setVideoPlaying(!videoPlaying)}
+                                className="w-14 h-14 rounded-full bg-[#821E1E]/95 border-2 border-[#dfb76c]/40 text-white flex items-center justify-center shadow-lg hover:scale-110 active:scale-95 transition cursor-pointer"
+                              >
+                                {videoPlaying ? <Pause className="w-5 h-5 fill-white" /> : <Play className="w-5 h-5 fill-white pl-0.5" />}
+                              </button>
+                            </div>
+                          )}
+
+                          {/* Bottom metadata */}
+                          <div className="z-10 space-y-1">
+                            <h4 className="text-white text-xs sm:text-sm font-black tracking-wide leading-tight">{chap.title}</h4>
+                            <span className="text-[7.5px] tracking-widest text-[#dfb76c] uppercase font-mono block">{chap.genre}</span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {/* Dot sliders */}
+                  <div className="flex gap-2 justify-center py-2">
+                    {CINEMATIC_CHAPTERS.map((_, dotIdx) => (
+                      <button
+                        key={dotIdx}
+                        onClick={() => {
+                          setCarouselIdx(dotIdx);
+                          setVideoPlaying(false);
+                        }}
+                        className={`h-1.5 rounded-full transition-all duration-300 ${
+                          dotIdx === carouselIdx ? 'w-6 bg-[#821E1E]' : 'w-1.5 bg-neutral-800'
+                        }`}
+                      />
+                    ))}
+                  </div>
+                </div>
+
+                {/* Simulated inline Video Playback */}
+                {videoPlaying && (
+                  <div className="p-4 bg-neutral-950 rounded-2xl border border-neutral-800 text-center animate-[fadeIn_0.3s_ease-out] space-y-2 max-w-xl mx-auto">
+                    <video 
+                      src={CINEMATIC_CHAPTERS[carouselIdx].videoUrl} 
+                      controls 
+                      autoPlay
+                      className="w-full h-auto max-h-72 rounded-xl border border-neutral-800 bg-black"
+                    />
+                    <p className="text-[10px] text-[#dfb76c] font-mono uppercase tracking-widest mt-1">
+                      NOW PLAYING: CHAPTER {carouselIdx + 1} - "{CINEMATIC_CHAPTERS[carouselIdx].quote}"
+                    </p>
+                  </div>
+                )}
+
+                {/* Classic Quote Frame (Image 2) */}
+                <div className="max-w-xl mx-auto p-6 rounded-3xl border border-neutral-800 bg-neutral-950/40 backdrop-blur-xs text-center space-y-4">
+                  <p className="text-xs sm:text-sm italic font-serif leading-relaxed text-stone-200">
+                    "Dan di antara tanda-tanda (kebesaran)-Nya ialah Dia menciptakan pasangan-pasangan untukmu dari jenismu sendiri, agar kamu cenderung dan merasa tenteram kepadanya, dan Dia menjadikan di antaramu rasa kasih dan sayang."
+                  </p>
+                  <div className="w-12 h-[1px] bg-red-700 mx-auto"></div>
+                  <span className="text-[10px] uppercase tracking-widest font-mono font-bold text-red-500 block">- QS. AR-RUM: 21</span>
+
+                  <p className="text-[11px] italic font-serif text-slate-400 pt-2 leading-relaxed max-w-md mx-auto">
+                    "Sebagaimana kapal nabi Nuh, ia akan mengikuti arus cinta hingga ke tempat yang tinggi, berlabuh diteduhnya rukun barakah sakinah."
+                  </p>
+                </div>
+              </section>
+            );
+          }
+
+          // ==========================================
+          // 2.C SECTION TYPE: BRIDE PROFILE
+          // ==========================================
+          if (sec.type === 'bride') {
+            return (
+              <section key={sec.id} className="space-y-6">
+                <div className="text-center">
+                  <span className="text-[10px] text-red-500 font-extrabold uppercase tracking-widest block font-mono">INTRODUCING THE CAST</span>
+                  <h2 className="text-2xl font-serif text-white font-black mt-1">Mempelai Wanita</h2>
+                </div>
+
+                <div className="bg-neutral-950 p-6 sm:p-8 rounded-[32px] border border-neutral-800 max-w-xl mx-auto flex flex-col sm:flex-row items-center gap-6 text-center sm:text-left shadow-2xl relative overflow-hidden">
+                  <div className="absolute right-4 top-4 text-[#dfb76c]/5 font-serif text-8xl font-black pointer-events-none select-none">H</div>
+                  
+                  {/* Photo crop */}
+                  <div className="w-32 h-32 rounded-full overflow-hidden shrink-0 border-2 border-[#dfb76c]/40 shadow-xl bg-neutral-900">
+                    <img 
+                      src={sec.mediaUrl || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=250"} 
+                      alt="The Bride Siti Hanum Handayani" 
+                      className="w-full h-full object-cover"
+                      referrerPolicy="no-referrer"
+                    />
+                  </div>
+
+                  {/* text */}
+                  <div className="space-y-3 relative z-10">
+                    <span className="inline-block text-[9px] bg-red-950/60 text-[#dfb76c] border border-red-900/60 px-3 py-1 rounded-full font-extrabold uppercase tracking-widest font-mono">
+                      {sec.subtitle || 'Siti Hanum Handayani, S.Kom.'}
+                    </span>
+                    <h3 className="text-xl font-serif font-black text-white">
+                      {sec.title}
+                    </h3>
+                    <p className="text-xs text-stone-300 leading-relaxed font-sans">
+                      {sec.description}
+                    </p>
+                  </div>
+                </div>
+              </section>
+            );
+          }
+
+          // ==========================================
+          // 2.D SECTION TYPE: GROOM PROFILE
+          // ==========================================
+          if (sec.type === 'groom') {
+            return (
+              <section key={sec.id} className="space-y-6">
+                <div className="text-center">
+                  <span className="text-[10px] text-red-500 font-extrabold uppercase tracking-widest block font-mono">INTRODUCING THE CAST</span>
+                  <h2 className="text-2xl font-serif text-white font-black mt-1">Mempelai Pria</h2>
+                </div>
+
+                <div className="bg-neutral-950 p-6 sm:p-8 rounded-[32px] border border-neutral-800 max-w-xl mx-auto flex flex-col sm:flex-row items-center gap-6 text-center sm:text-left shadow-2xl relative overflow-hidden">
+                  <div className="absolute right-4 top-4 text-red-800/10 font-serif text-8xl font-black pointer-events-none select-none">L</div>
+                  
+                  {/* Photo crop */}
+                  <div className="w-32 h-32 rounded-full overflow-hidden shrink-0 border-2 border-red-800/40 shadow-xl bg-neutral-900">
+                    <img 
+                      src={sec.mediaUrl || "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&q=80&w=250"} 
+                      alt="The Groom Muhammad Luthfi" 
+                      className="w-full h-full object-cover"
+                      referrerPolicy="no-referrer"
+                    />
+                  </div>
+
+                  {/* text */}
+                  <div className="space-y-3 relative z-10">
+                    <span className="inline-block text-[9px] bg-red-950/60 text-[#dfb76c] border border-red-900/60 px-3 py-1 rounded-full font-extrabold uppercase tracking-widest font-mono">
+                      {sec.subtitle || 'Muhammad Luthfi, S.Pd.'}
+                    </span>
+                    <h3 className="text-xl font-serif font-black text-white">
+                      {sec.title}
+                    </h3>
+                    <p className="text-xs text-stone-300 leading-relaxed font-sans">
+                      {sec.description}
+                    </p>
+                  </div>
+                </div>
+              </section>
+            );
+          }
+
+          // ==========================================
+          // 2.E SECTION TYPE: LOVE STORY
+          // ==========================================
+          if (sec.type === 'story') {
+            return (
+              <section key={sec.id} className="space-y-6">
+                <div className="text-center">
+                  <h2 className="wedding-font-serif text-2xl font-extrabold text-[#dfb76c]">
+                    {sec.title}
+                  </h2>
+                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">
+                    {sec.subtitle || 'Our Love Story'}
+                  </p>
+                </div>
+
+                <div className="p-6 sm:p-8 bg-white/55 border border-white/60 rounded-[32px] shadow-xs hover:shadow-sm transition max-w-xl mx-auto">
+                  <p className="text-xs text-slate-500 leading-relaxed italic text-center">
+                    "{sec.description}"
+                  </p>
+                </div>
+              </section>
+            );
+          }
+
+          // ==========================================
+          // 2.F SECTION TYPE: GALLERY SHOWCASE
+          // ==========================================
+          if (sec.type === 'gallery') {
+            const galleryImages = [
+              'https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&q=80&w=500',
+              'https://images.unsplash.com/photo-1515934751635-c81c6bc9a2d8?auto=format&fit=crop&q=80&w=500',
+              'https://images.unsplash.com/photo-1606800052052-a08af7148866?auto=format&fit=crop&q=80&w=500',
+              'https://images.unsplash.com/photo-1524661135-423995f22d0b?auto=format&fit=crop&q=80&w=500',
+              'https://images.unsplash.com/photo-1532712938310-34cb3982ef74?auto=format&fit=crop&q=80&w=500',
+              'https://images.unsplash.com/photo-1465495976277-4387d4b0b4c6?auto=format&fit=crop&q=80&w=500'
+            ];
+
+            return (
+              <section key={sec.id} className="space-y-6">
+                <div className="text-center">
+                  <h2 className="wedding-font-serif text-2xl font-extrabold text-[#dfb76c]">
+                    {sec.title}
+                  </h2>
+                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">
+                    {sec.subtitle || 'Prewedding Photo Gallery'}
+                  </p>
+                </div>
+
+                {/* Grid view */}
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                  {galleryImages.map((img, index) => (
+                    <div 
+                      key={index} 
+                      onClick={() => setLightboxImage(img)}
+                      className="aspect-square rounded-2xl overflow-hidden hover:scale-102 hover:shadow-lg transition-all duration-300 cursor-pointer border border-[#dfb76c]/10"
+                    >
+                      <img 
+                        src={img} 
+                        alt="Prewedding item" 
+                        className="w-full h-full object-cover"
+                        referrerPolicy="no-referrer"
+                      />
+                    </div>
+                  ))}
+                </div>
+
+                {/* Lightbox Modal */}
+                {lightboxImage && (
+                  <div className="fixed inset-0 z-50 bg-slate-950/95 backdrop-blur-sm flex items-center justify-center p-4">
+                    <button 
+                      onClick={() => setLightboxImage(null)}
+                      className="absolute top-5 right-5 w-10 h-10 rounded-full bg-slate-900 border border-slate-800 text-white flex items-center justify-center shadow hover:bg-slate-800 cursor-pointer"
+                    >
+                      ✕
+                    </button>
+                    <img 
+                      src={lightboxImage} 
+                      alt="Lightbox visual prewedding" 
+                      className="max-w-full max-h-[85vh] object-contain rounded-2xl border border-slate-800 shadow-2xl"
+                    />
+                  </div>
+                )}
+              </section>
+            );
+          }
+
+          // ==========================================
+          // 2.G SECTION TYPE: TIMELINE EVENT INFO & MAPS
+          // ==========================================
+          if (sec.type === 'timeline') {
+            return (
+              <section key={sec.id} className="space-y-6">
+                <div className="text-center">
+                  <span className="text-[10px] text-red-500 font-extrabold uppercase tracking-widest block font-mono">TIMELINE SCHEDULE</span>
+                  <h2 className="text-2xl font-serif text-white font-black mt-1">Jadwal Acara Premiere</h2>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                  {/* Item 1: Akad */}
+                  <div className="bg-neutral-950 p-6 rounded-[28px] border border-neutral-800 relative text-center space-y-4 shadow-xl">
+                    <div className="w-12 h-12 rounded-full bg-[#821E1E]/20 text-[#dfb76c] flex items-center justify-center border border-red-800/40 mx-auto">
+                      <Users className="w-5 h-5" />
+                    </div>
+                    <div className="space-y-1">
+                      <h3 className="font-serif text-base font-bold text-white">Akad Nikah</h3>
+                      <p className="text-[9px] text-red-500 font-mono font-bold uppercase tracking-widest">AKAD PEMBUKA</p>
+                    </div>
+                    <div className="w-10 h-[1px] bg-[#dfb76c]/40 mx-auto"></div>
+                    
+                    <div className="space-y-2 text-xs text-stone-300 font-mono">
+                      <div className="flex items-center justify-center gap-1.5">
+                        <Calendar className="w-3.5 h-3.5 text-[#dfb76c]" />
+                        <span>Minggu, 13 September 2026</span>
+                      </div>
+                      <div className="flex items-center justify-center gap-1.5">
+                        <Clock className="w-3.5 h-3.5 text-[#dfb76c]" />
+                        <span>08:00 - 10:00 WIB</span>
+                      </div>
+                      <p className="text-[11px] leading-relaxed italic not-mono text-stone-400">
+                        Masjid Agung Al-Fatih, Jl. Siliwangi No. 12, Bandung
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Item 2: Resepsi */}
+                  <div className="bg-neutral-950 p-6 rounded-[28px] border border-neutral-800 relative text-center space-y-4 shadow-xl">
+                    <div className="w-12 h-12 rounded-full bg-red-950/40 text-[#dfb76c] flex items-center justify-center border border-red-900/60 mx-auto">
+                      <Users2 className="w-5 h-5" />
+                    </div>
+                    <div className="space-y-1">
+                      <h3 className="font-serif text-base font-bold text-white">Resepsi Nikah</h3>
+                      <p className="text-[9px] text-red-500 font-mono font-bold uppercase tracking-widest">THE SHOWTIME</p>
+                    </div>
+                    <div className="w-10 h-[1px] bg-[#dfb76c]/40 mx-auto"></div>
+
+                    <div className="space-y-2 text-xs text-stone-300 font-mono">
+                      <div className="flex items-center justify-center gap-1.5">
+                        <Calendar className="w-3.5 h-3.5 text-[#dfb76c]" />
+                        <span>Minggu, 13 September 2026</span>
+                      </div>
+                      <div className="flex items-center justify-center gap-1.5">
+                        <Clock className="w-3.5 h-3.5 text-[#dfb76c]" />
+                        <span>11:00 - 16:00 WIB</span>
+                      </div>
+                      <p className="text-[11px] leading-relaxed italic not-mono text-stone-400">
+                        Gedung Bale Pertiwi Indah, Raya Cipaganti, Bandung
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Real-time Address Peta layout */}
+                <div className="bg-neutral-950 rounded-[28px] overflow-hidden border border-neutral-800 shadow-xl">
+                  <div className="bg-neutral-900 px-4 py-3.5 flex items-center justify-between text-xs font-bold border-b border-white/5 font-mono">
+                    <span className="flex items-center gap-1.5 text-[#dfb76c]">
+                      <Map className="w-4 h-4 text-[#dfb76c]" />
+                      <span>LIVE DIRECTIONS MAP</span>
+                    </span>
+                    <a 
+                      href="https://maps.google.com" 
+                      target="_blank" 
+                      rel="noreferrer"
+                      className="text-red-500 font-black uppercase text-[9px] tracking-wider"
+                    >
+                      Google Maps Asli ↗
+                    </a>
+                  </div>
+                  <div className="h-44 bg-neutral-900 relative overflow-hidden flex items-center justify-center p-4">
+                    <img 
+                      src="https://images.unsplash.com/photo-1524661135-423995f22d0b?auto=format&fit=crop&q=80&w=800" 
+                      alt="Address map preview background" 
+                      className="absolute inset-0 w-full h-full object-cover opacity-10"
+                      referrerPolicy="no-referrer"
+                    />
+                    <div className="p-4 bg-neutral-950/95 border border-neutral-800 rounded-2xl max-w-sm text-center relative z-10 space-y-2.5">
+                      <span className="text-[8px] bg-red-950 text-[#dfb76c] px-2.5 py-0.5 rounded border border-red-900 font-bold uppercase tracking-widest font-mono">MAP POINT VENUE</span>
+                      <h4 className="text-xs font-bold text-white">Gedung Bale Pertiwi Indah, Bandung</h4>
+                      <p className="text-[10px] text-stone-300 leading-relaxed">Raya Cipaganti, Bandung, Jawa Barat (lokasi strategis dekat pusat kota).</p>
+                      
+                      <div className="flex items-center justify-center gap-1.5 pt-1.5 border-t border-white/5 font-mono">
+                        <button 
+                          onClick={() => handleCopy('-6.8912, 107.6045', 'gps')}
+                          className="px-3 py-1 bg-neutral-900 border border-neutral-800 text-[9.5px] font-bold text-stone-300 rounded-md hover:bg-neutral-800"
+                        >
+                          {copiedAccount === 'gps' ? 'Tersalin' : 'Copy GPS Koordinat'}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* AI ROUTE ASSISTANT (CO-PILOT CONCIERGE) */}
+                <div className="bg-neutral-950 rounded-[28px] p-5 border border-neutral-800 space-y-4 text-xs shadow-xl">
+                  <div className="flex items-center gap-1.5">
+                    <Compass className="w-5 h-5 text-red-500 animate-pulse" />
+                    <span className="text-[9px] font-black uppercase tracking-widest font-mono text-stone-400">🧭 CO-PILOT ASISTEN RUTE CERDAS (AI COMPASS)</span>
+                  </div>
+
+                  <p className="text-[10.5px] text-stone-300 leading-relaxed font-sans">
+                    Masukkan asal lokasi atau perkiraan sarana kendaraan Anda secara spesifik untuk kalkulasi arah rute terbaik, durasi waktu cepat, serta anjuran berangkat ke lokasi (Bandung).
+                  </p>
+
+                  <form onSubmit={async (e) => {
+                    e.preventDefault();
+                    if (!routeStartLocation.trim()) return;
+                    setRouteLoading(true);
+                    try {
+                      const response = await fetch('/api/wedding/route-assistant', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ startLocation: routeStartLocation })
+                      });
+                      if (response.ok) {
+                        const data = await response.json();
+                        setRoutePlanning(data);
+                      } else {
+                        setRoutePlanning({
+                          recommendedRoute: 'Gunakan Jl. Dr. Djunjunan langsung mengarah ke Flyover Pasupati, ambil jalur keluar Cipaganti lurus terus hingga lokasi Gedung.',
+                          estimatedTime: '25 Menit',
+                          suggestedDeparture: '10:15 WIB (Disarankan berangkat awal menghindari macet akhir pekan)'
+                        });
+                      }
+                    } catch {
+                      setRoutePlanning({
+                        recommendedRoute: 'Gunakan Jl. Dr. Djunjunan langsung mengarah ke Flyover Pasupati, ambil jalur keluar Cipaganti lurus terus hingga lokasi Gedung.',
+                        estimatedTime: '25 Menit',
+                        suggestedDeparture: '10:15 WIB (Disarankan berangkat awal menghindari macet akhir pekan)'
+                      });
+                    } finally {
+                      setRouteLoading(false);
+                    }
+                  }} className="flex gap-2">
+                    <input 
+                      type="text" 
+                      required
+                      placeholder="Contoh: Dari Pasteur naik mobil / Dari Dago"
+                      className="flex-1 px-3 py-2 border border-neutral-800 bg-neutral-900 rounded-xl focus:outline-none focus:border-[#dfb76c] text-[11px] text-white"
+                      value={routeStartLocation}
+                      onChange={(e) => setRouteStartLocation(e.target.value)}
+                    />
+                    <button 
+                      type="submit" 
+                      disabled={routeLoading}
+                      className="px-4 py-2 bg-[#821E1E] text-white font-extrabold uppercase rounded-xl tracking-widest text-[8px] hover:bg-red-700 transition flex items-center gap-1 cursor-pointer disabled:opacity-40"
+                    >
+                      {routeLoading ? 'KALKULASI...' : 'INPUT AI'}
+                    </button>
+                  </form>
+
+                  {routePlanning && (
+                    <div className="p-4 bg-neutral-900 border border-neutral-800 rounded-2xl space-y-3 animate-[fadeIn_0.2s_ease-out]">
+                      <div className="grid grid-cols-2 gap-3 text-center border-b border-white/5 pb-3 font-mono">
+                        <div className="border-r border-white/5">
+                          <span className="text-[7.5px] text-stone-500 font-bold uppercase tracking-wider block">⏱ ESTIMASI DURASI</span>
+                          <span className="text-xs font-black text-[#dfb76c] block mt-1">{routePlanning.estimatedTime}</span>
+                        </div>
+                        <div>
+                          <span className="text-[7.5px] text-stone-500 font-bold uppercase tracking-wider block">🕰 WAKTU BERANGKAT ANJURAN</span>
+                          <span className="text-xs font-black text-red-500 block mt-1">{routePlanning.suggestedDeparture}</span>
+                        </div>
+                      </div>
+
+                      <div>
+                        <span className="text-[8px] text-[#dfb76c] font-black uppercase tracking-widest font-mono block mb-1">🛣 JALUR UTAMA REKOMENDASI AI:</span>
+                        <p className="text-[10.5px] text-stone-300 leading-relaxed font-mono">
+                          {routePlanning.recommendedRoute}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </section>
+            );
+          }
+
+          // ==========================================
+          // 2.H SECTION TYPE: SMART SEATING RSVP
+          // ==========================================
+          if (sec.type === 'rsvp') {
+            return (
+              <section key={sec.id} className="space-y-6">
+                <div className="text-center">
+                  <span className="text-[10px] text-red-500 font-extrabold uppercase tracking-widest block font-mono">SEATING REGISTRATION</span>
+                  <h2 className="text-2xl font-serif text-white font-black mt-1">
+                    {sec.title}
+                  </h2>
+                </div>
+
+                <div className="bg-neutral-950 p-6 sm:p-8 rounded-[32px] border border-neutral-800 max-w-xl mx-auto shadow-2xl space-y-6">
+                  <p className="text-xs text-stone-400 leading-relaxed text-center">
+                    {sec.description || 'Konfirmasi reservasi kehadiran Anda untuk verifikasi boarding-pass dan alokasi tempat duduk VIP.'}
+                  </p>
+
+                  {rsvpSent && myTicket ? (
+                    <div className="space-y-5 animate-[fadeIn_0.3s_ease-out]">
+                      <div className="p-4 bg-red-950/40 border border-red-900/60 text-stone-200 font-bold rounded-2xl text-xs flex items-center gap-2.5">
+                        <Check className="w-5 h-5 text-red-500 shrink-0" />
+                        <span>KEHADIRAN DIKONFIRMASI! E-Ticket premiere bioskop Anda siap diunduh & digunakan.</span>
+                      </div>
+
+                      {/* Display beautiful confirmed cinema ticket */}
+                      <div className="bg-neutral-900 rounded-2xl border border-red-900/60 text-slate-100 font-mono text-xs overflow-hidden shadow-2xl">
+                        <div className="bg-black border-b border-neutral-800 px-4 py-3.5 flex justify-between items-center text-[9px]">
+                          <span className="text-[#dfb76c] font-black tracking-widest">VIP ADMISSION PASS</span>
+                          <span className="text-red-500 font-black">{myTicket.ticketNumber}</span>
+                        </div>
+
+                        <div className="p-4 grid grid-cols-2 gap-4 text-center">
+                          <div className="border-r border-neutral-800 p-2">
+                            <span className="text-[8px] text-stone-500 font-bold uppercase block tracking-wider">RECIPIENT NAME</span>
+                            <span className="text-white font-bold block mt-1 truncate">{myTicket.guestName}</span>
+                          </div>
+                          <div className="p-2">
+                            <span className="text-[8px] text-stone-500 font-bold uppercase block tracking-wider">SEAT ROW / NO</span>
+                            <span className="text-[#dfb76c] font-black block mt-1">{myTicket.seatNumber}</span>
+                          </div>
+
+                          <div className="border-r border-neutral-800 p-2 border-t border-neutral-800">
+                            <span className="text-[8px] text-stone-500 font-bold uppercase block tracking-wider">BOOKING SESSION</span>
+                            <span className="text-white font-bold block mt-1 truncate text-[10px]">{myTicket.session}</span>
+                          </div>
+                          <div className="p-2 border-t border-neutral-800">
+                            <span className="text-[8px] text-stone-500 font-bold uppercase block tracking-wider">VISITOR PAX</span>
+                            <span className="text-white font-bold block mt-1">{myTicket.guestsCount} Pax</span>
+                          </div>
+                        </div>
+
+                        <div className="bg-black px-4 py-4 flex flex-col items-center gap-2 border-t border-dashed border-red-900/40">
+                          <img 
+                            src={myTicket.qrCodeUrl} 
+                            alt="QR Invitation ticket barcode" 
+                            className="w-24 h-24 bg-white p-1 rounded-lg"
+                          />
+                          <span className="text-[8px] text-stone-500 uppercase tracking-widest font-bold">Tunjukkan barcode di atas saat di pintu utama.</span>
+                        </div>
+                      </div>
+
+                    </div>
+                  ) : (
+                    <form onSubmit={handleRSVPBooking} className="space-y-4 text-xs text-stone-300">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-stone-400 font-bold mb-1">Kehadiran Berkenan Hadir?</label>
+                          <select
+                            className="w-full px-3 py-2 border border-neutral-850 bg-neutral-900 text-white rounded-lg font-bold"
+                            value={rsvpForm.attendance}
+                            onChange={(e) => setRsvpForm({ ...rsvpForm, attendance: e.target.value as any })}
+                          >
+                            <option value="hadir">Yth. Berkenan Hadir</option>
+                            <option value="tidak_hadir">Berhalangan Hadir</option>
+                          </select>
+                        </div>
+
+                        <div>
+                          <label className="block text-stone-400 font-bold mb-1">Pilih Sesi Resepsi</label>
+                          <select
+                            className="w-full px-3 py-2 border border-neutral-850 bg-neutral-900 text-white rounded-lg font-bold"
+                            value={rsvpForm.session}
+                            onChange={(e) => setRsvpForm({ ...rsvpForm, session: e.target.value })}
+                          >
+                            <option value="Sesi 1 (Akad & Opening VIP)">Sesi 1 (Akad & Opening): 10:00 - 12:00 WIB</option>
+                            <option value="Sesi 2 (Resepsi VIP Premiere)">Sesi 2 (Resepsi Premiere): 13:00 - 15:00 WIB</option>
+                          </select>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-stone-400 font-bold mb-1">Jumlah Tamu (Max 4 Pax)</label>
+                          <input 
+                            type="number"
+                            min={1} 
+                            max={4}
+                            className="w-full px-3 py-2 border border-neutral-850 bg-neutral-900 text-white rounded-lg font-bold"
+                            value={rsvpForm.guestsCount}
+                            onChange={(e) => setRsvpForm({ ...rsvpForm, guestsCount: Number(e.target.value) })}
+                            required
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-stone-400 font-bold mb-1">Nama Tamu Pemesan</label>
+                          <input 
+                            type="text" 
+                            disabled 
+                            className="w-full px-3 py-2 border border-neutral-850 bg-neutral-900 rounded-lg font-bold text-stone-500"
+                            value={toGuest || 'Tamu Undangan'}
+                          />
+                        </div>
+                      </div>
+
+                      <button
+                        type="submit"
+                        className="w-full py-3 bg-[#821E1E] text-white font-black tracking-widest uppercase rounded-xl hover:bg-red-700 cursor-pointer text-[10px] transform hover:-translate-y-0.5 transition"
+                      >
+                        PESAN TIKET ADMISSION & AMBIL NOMOR SEAT
+                      </button>
+                    </form>
+                  )}
+                </div>
+              </section>
+            );
+          }
+
+          // ==========================================
+          // 2.I SECTION TYPE: DIGITAL SOUVENIR GACHA
+          // ==========================================
+          if (sec.type === 'gift') {
+            return (
+              <section key={sec.id} className="space-y-6">
+                <div className="text-center">
+                  <span className="text-[10px] text-red-500 font-extrabold uppercase tracking-widest block font-mono">EXCLUSIVE SOUVENIR</span>
+                  <h2 className="text-2xl font-serif text-white font-black mt-1">
+                    {sec.title}
+                  </h2>
+                </div>
+
+                <div className="bg-neutral-950 p-6 sm:p-8 rounded-[32px] border border-neutral-800 max-w-xl mx-auto shadow-2xl text-center space-y-6 relative overflow-hidden">
+                  {/* Glowing background highlights in Gacha box */}
+                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 bg-[#dfb76c]/5 rounded-full blur-2xl pointer-events-none"></div>
+
+                  <p className="text-xs text-stone-400 leading-relaxed">
+                    {sec.description || 'Ambil dan undilah souvenir digital spesial berhadiah menarik dari Hanum & Luthfi di bawah ini.'}
+                  </p>
+
+                  <div className="relative max-w-xs mx-auto">
+                    {/* Spinning wheel / Box animation graphics */}
+                    <div className="w-36 h-36 mx-auto bg-black border-4 border-[#dfb76c] rounded-full flex items-center justify-center relative shadow-inner overflow-hidden">
+                      
+                      {isSpinning ? (
+                        <div className="absolute inset-0 border-4 border-dashed border-red-500 rounded-full animate-spin"></div>
+                      ) : null}
+
+                      {/* Content insides of box */}
+                      <div className="text-center z-10 space-y-1">
+                        {isSpinning ? (
+                          <div className="space-y-1.5 animate-pulse">
+                            <Sparkle className="w-6 h-6 text-red-500 animate-spin mx-auto" />
+                            <span className="text-[8px] font-mono text-red-500 font-black tracking-widest block uppercase">DRAWING SEED...</span>
+                          </div>
+                        ) : gachaReward ? (
+                          <span className="text-3xl">🎉</span>
+                        ) : (
+                          <div className="space-y-1">
+                            <Gift className="w-8 h-8 text-[#dfb76c] mx-auto animate-bounce" />
+                            <span className="text-[8px] font-mono text-stone-500 font-bold uppercase block tracking-widest">TAP SPIN BUTTON</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Draw button or Reward Card results */}
+                  {gachaReward ? (
+                    <div className="p-5 border border-red-900/40 rounded-2xl bg-neutral-900 shadow-2xl max-w-sm mx-auto space-y-3 animate-[fadeIn_0.3s_ease-out]">
+                      <span className="text-[9px] bg-red-950 text-red-400 font-extrabold uppercase px-2.5 py-0.5 rounded-full font-mono tracking-widest">
+                        MY EXCLUSIVE PRIZE DRAWN
+                      </span>
+                      
+                      <div className="aspect-video w-full rounded-xl overflow-hidden border border-neutral-800 bg-black shadow-inner">
+                        <img 
+                          src={gachaReward.imageUrl} 
+                          alt="Gacha prize rewards background" 
+                          className="w-full h-full object-cover"
+                          referrerPolicy="no-referrer"
+                        />
+                      </div>
+                      
+                      <h4 className="text-sm font-black text-white">{gachaReward.title}</h4>
+                      <p className="text-[11px] text-stone-300 leading-relaxed font-mono">{gachaReward.description}</p>
+                      
+                      <div className="text-[10px] text-emerald-500 font-bold font-mono">
+                        ✓ Souvenir tervalidasi dan disimpan di boarding-pass tamu Anda.
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      <button 
+                        onClick={spinGacha}
+                        disabled={isSpinning}
+                        className="px-8 py-3 rounded-full bg-neutral-900 hover:bg-neutral-850 border border-neutral-800 text-[#dfb76c] font-black tracking-widest uppercase text-[10px] cursor-pointer shadow-md transform hover:scale-[1.03] transition-all disabled:opacity-40"
+                      >
+                        {isSpinning ? 'MEMUTAR REEL SOUVENIR...' : 'ROLL SOUVENIR TICKET'}
+                      </button>
+                      <span className="block text-[8px] text-stone-500 font-medium font-mono uppercase tracking-widest">
+                        Limit: 1x Draw untuk setiap tamu aktif!
+                      </span>
+                    </div>
+                  )}
+
+                  {/* Reward List and probabilistic details */}
+                  <div className="border-t border-white/5 pt-5 text-left max-w-md mx-auto">
+                    <span className="text-[9px] text-[#dfb76c] font-bold uppercase tracking-widest font-mono">
+                      📋 TINGKAT AKURASI & STOCK HADIAH SOUVENIR:
+                    </span>
+                    <div className="mt-2.5 space-y-2 text-[10px] text-stone-400 font-mono">
+                      {rewardsList.map(r => (
+                        <div key={r.id} className="flex justify-between items-center text-xs pb-1.5 border-b border-dashed border-white/5">
+                          <span className="font-bold text-stone-200">{r.title}</span>
+                          <div className="flex items-center gap-2">
+                            <span className="bg-neutral-900 text-stone-500 font-bold px-1.5 py-0.5 rounded text-[10px]">Prob: {r.probability}%</span>
+                            <span className={`px-1.5 py-0.5 rounded font-black text-[10px] ${r.remaining > 0 ? 'bg-red-950/40 text-red-400' : 'bg-stone-900 text-stone-600'}`}>
+                              {r.remaining > 0 ? `Stock: ${r.remaining} Pcs` : 'STOK HABIS'}
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                </div>
+              </section>
+            );
+          }
+
+          // ==========================================
+          // 2.J SECTION TYPE: INSTAGRAM STORY GUESTBOOK
+          // ==========================================
+          if (sec.type === 'guestbook') {
+            const hasStories = guestBook.length > 0;
+            const currentStory = hasStories ? guestBook[activeStoryIdx] : null;
+
+            return (
+              <React.Fragment key="thematic-dresscode">
+                {/* DRESSCODE PALETTE */}
+                <section className="space-y-6 select-none sm:py-6">
+                  <div className="text-center">
+                    <span className="text-[10px] text-red-500 font-extrabold uppercase tracking-widest block font-mono">DRESS CODE PALETTE</span>
+                    <h2 className="text-2xl font-serif text-white font-black mt-1">
+                      Dresscode Undangan
+                    </h2>
+                  </div>
+
+                  <div className="bg-neutral-950 p-6 sm:p-8 rounded-[32px] border border-neutral-800 text-stone-200 max-w-xl mx-auto shadow-2xl space-y-6">
+                    <p className="text-xs text-stone-400 leading-relaxed text-center font-sans">
+                      Demi keselarasan visual dokumentasi pada penayangan perdana istimewa Hanum & Luthfi, para tamu undangan kehormatan disarankan mengenakan pakaian dengan nuansa palet warna berikut:
+                    </p>
+
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                      <div className="p-3 bg-neutral-900 border border-neutral-850 rounded-2xl text-center space-y-2 flex flex-col items-center shadow-md">
+                        <div className="w-10 h-10 rounded-full bg-[#FAECE1] shadow-inner border border-neutral-800"></div>
+                        <span className="font-extrabold text-xs text-white">Warm Cream</span>
+                        <span className="text-[8px] text-[#dfb76c] font-mono block uppercase font-bold">Keluarga</span>
+                      </div>
+
+                      <div className="p-3 bg-neutral-900 border border-neutral-850 rounded-2xl text-center space-y-2 flex flex-col items-center shadow-md">
+                        <div className="w-10 h-10 rounded-full bg-[#A2B8AA] shadow-inner border border-neutral-800"></div>
+                        <span className="font-extrabold text-xs text-white">Sage Green</span>
+                        <span className="text-[8px] text-[#dfb76c] font-mono block uppercase font-bold">Kerabat</span>
+                      </div>
+
+                      <div className="p-3 bg-neutral-900 border border-neutral-850 rounded-2xl text-center space-y-2 flex flex-col items-center shadow-md">
+                        <div className="w-10 h-10 rounded-full bg-[#AA8060] shadow-inner border border-neutral-800"></div>
+                        <span className="font-extrabold text-xs text-white">Warm Brown</span>
+                        <span className="text-[8px] text-[#dfb76c] font-mono block uppercase font-bold">Teman Kerja</span>
+                      </div>
+
+                      <div className="p-3 bg-neutral-900 border border-neutral-850 rounded-2xl text-center space-y-2 flex flex-col items-center shadow-md">
+                        <div className="w-10 h-10 rounded-full bg-[#821E1E] shadow-inner border border-neutral-800"></div>
+                        <span className="font-extrabold text-xs text-white">Deep Maroon</span>
+                        <span className="text-[8px] text-[#dfb76c] font-mono block uppercase font-bold">Tamu VIP</span>
+                      </div>
+                    </div>
+                  </div>
+                </section>
+
+                {/* CERITA KECIL DARI SAHABAT avatar carousel rails */}
+                <section className="space-y-4 select-none sm:py-6">
+                  <div className="text-center">
+                    <span className="text-[10px] text-red-500 font-extrabold uppercase tracking-widest block font-mono">FRIENDS REVIEW STORIES</span>
+                    <h3 className="text-xl font-serif text-white font-black mt-1">Cerita Kecil Dari Sahabat</h3>
+                  </div>
+                  
+                  {/* Scrollable round avatars train */}
+                  <div className="flex gap-4 overflow-x-auto py-4 px-2 justify-start sm:justify-center scrollbar-hide max-w-xl mx-auto border-b border-white/5 pb-6">
+                    {/* Access to globally populated friend reviews */}
+                    {FRIEND_STORIES.map((story, idx) => (
+                      <button 
+                        key={idx}
+                        onClick={() => setSelectedReview(story)}
+                        className="flex flex-col items-center gap-2 shrink-0 group focus:outline-none cursor-pointer"
+                      >
+                        <div className="w-14 h-14 rounded-full p-0.5 bg-gradient-to-tr from-[#dfb76c] via-red-500 to-amber-700 group-hover:scale-[1.05] transition-all">
+                          <div className="w-full h-full rounded-full border border-black overflow-hidden bg-neutral-900 flex items-center justify-center text-lg">
+                            {getAvatarView(story.avatar)}
+                          </div>
+                        </div>
+                        <div className="text-center">
+                          <span className="text-[10.5px] font-bold text-stone-200 block max-w-[80px] truncate">{story.name}</span>
+                          <span className="text-[8px] font-mono text-red-500 block uppercase font-bold tracking-wider">{story.fullName.split(' ')[0]}</span>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </section>
+
+                <section key={sec.id} className="space-y-6">
+                  <div className="text-center">
+                    <span className="text-[10px] text-red-500 font-extrabold uppercase tracking-widest block font-mono">CINEMATIC CAROUSEL GUESTBOOK</span>
+                    <h2 className="text-2xl font-serif text-white font-black mt-1">
+                      {sec.title}
+                    </h2>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-start">
+                    
+                    {/* IG Story Carousel Active Player Component */}
+                    <div className="md:col-span-7 select-none">
+                      <div className="relative bg-[#090909] aspect-[9/16] max-w-[300px] mx-auto rounded-[32px] overflow-hidden shadow-2xl border border-[#dfb76c]/15 flex flex-col justify-between p-5 text-slate-100">
+                        
+                        {/* Top Story Progressive bar list */}
+                        <div className="flex gap-1 z-10">
+                          {hasStories && guestBook.map((_, idx) => (
+                            <div key={idx} className="h-0.5 flex-1 bg-stone-900 rounded-full overflow-hidden">
+                              <div 
+                                className="h-full bg-gradient-to-r from-red-500 to-amber-500 transition-all duration-75"
+                                style={{ 
+                                  width: idx === activeStoryIdx 
+                                    ? `${storyProgress}%` 
+                                    : idx < activeStoryIdx 
+                                    ? '100%' 
+                                    : '0%' 
+                                }}
+                              />
+                            </div>
+                          ))}
+                        </div>
+
+                        {/* Active Guest Info top tag */}
+                        {currentStory && (
+                          <div className="flex items-center justify-between z-10 mt-3 bg-neutral-950 p-2 rounded-xl border border-neutral-800">
+                            <div className="flex items-center gap-2 text-xs">
+                              <div className="w-8 h-8 rounded-full border border-red-900/60 overflow-hidden flex items-center justify-center bg-black shrink-0 select-none">
+                                {getAvatarView(currentStory.avatar)}
+                              </div>
+                              <div>
+                                <div className="font-black text-white truncate max-w-[130px] leading-none">
+                                  {currentStory.name}
+                                </div>
+                                <span className="text-[8px] text-[#dfb76c] uppercase font-bold tracking-widest block font-mono mt-0.5">
+                                  {currentStory.relation}
+                                </span>
+                              </div>
+                            </div>
+                            
+                            <span className="text-[7.5px] text-stone-500 font-bold uppercase tracking-widest font-mono">
+                              {new Date(currentStory.createdAt).toLocaleDateString('id-ID')}
+                            </span>
+                          </div>
+                        )}
+
+                        {/* Left/Right click triggers zone */}
+                        <div className="absolute inset-y-0 left-0 w-1/4 z-20 cursor-w-resize" onClick={() => {
+                          if (hasStories) {
+                            setActiveStoryIdx(prev => (prev === 0 ? guestBook.length - 1 : prev - 1));
+                            setStoryProgress(0);
+                          }
+                        }}></div>
+                        <div className="absolute inset-y-0 right-0 w-1/4 z-20 cursor-e-resize" onClick={() => {
+                          if (hasStories) {
+                            setActiveStoryIdx(prev => (prev + 1) % guestBook.length);
+                            setStoryProgress(0);
+                          }
+                        }}></div>
+
+                        {/* Center Content Message */}
+                        <div className="flex-1 flex flex-col justify-center items-center px-4 text-center z-10">
+                          {currentStory ? (
+                            <div className="space-y-4 max-w-[220px]">
+                              <h4 className="text-sm font-black text-[#dfb76c] uppercase tracking-wider leading-relaxed">
+                                "{currentStory.message}"
+                              </h4>
+                              <div className="w-8 h-[1px] bg-[#dfb76c]/20 mx-auto"></div>
+                              <p className="text-xs text-stone-300 leading-relaxed italic">
+                                "{currentStory.prayer}"
+                              </p>
+                            </div>
+                          ) : (
+                            <div className="text-center space-y-2 text-stone-500">
+                              <Smile className="w-8 h-8 text-[#821E1E] mx-auto animate-bounce" />
+                              <p className="text-[10px] font-mono text-stone-400 font-bold uppercase tracking-widest">Belum ada ucapan</p>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Bottom AI Reply Overlay */}
+                        {currentStory && currentStory.aiReply && (
+                          <div className="z-10 bg-[#821E1E]/10 p-3 rounded-2xl border border-red-900/40 text-stone-200 leading-relaxed font-mono">
+                            <div className="flex items-center gap-1.5 text-[8px] text-[#dfb76c] font-black tracking-widest uppercase mb-1">
+                              <Sparkles className="w-3.5 h-3.5 text-[#dfb76c] fill-yellow-850" />
+                              <span>AI WEDDING CO-HOST REPLY</span>
+                            </div>
+                            <p className="text-[10px] leading-relaxed text-stone-200">
+                              "{currentStory.aiReply}"
+                            </p>
+                          </div>
+                        )}
+
+                      </div>
+
+                      {/* Story Arrow Navigation indicators */}
+                      <div className="flex items-center justify-center gap-4 mt-3">
+                        <button 
+                          onClick={() => {
+                            if (hasStories) {
+                              setActiveStoryIdx(prev => (prev === 0 ? guestBook.length - 1 : prev - 1));
+                              setStoryProgress(0);
+                            }
+                          }}
+                          className="w-8 h-8 rounded-full border border-neutral-800 bg-[#0c0c0c] hover:bg-neutral-900 shadow flex items-center justify-center text-white active:scale-90 transition cursor-pointer"
+                        >
+                          <ChevronLeft className="w-4 h-4" />
+                        </button>
+                        <span className="font-mono text-[9px] text-[#dfb76c] font-black uppercase">
+                          {guestBook.length > 0 ? `${activeStoryIdx + 1} / ${guestBook.length} DOA` : '0 DOA'}
+                        </span>
+                        <button 
+                          onClick={() => {
+                            if (hasStories) {
+                              setActiveStoryIdx(prev => (prev + 1) % guestBook.length);
+                              setStoryProgress(0);
+                            }
+                          }}
+                          className="w-8 h-8 rounded-full border border-neutral-800 bg-[#0c0c0c] hover:bg-neutral-900 shadow flex items-center justify-center text-white active:scale-90 transition cursor-pointer"
+                        >
+                          <ChevronRight className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Form to post message & prayer wishes */}
+                    <div className="md:col-span-5 bg-neutral-950 p-5 rounded-3xl border border-neutral-800 text-stone-300 text-xs shadow-2xl">
+                      <h3 className="text-xs font-black uppercase tracking-widest text-red-500 mb-3 flex items-center gap-1.5 font-mono">
+                        <Smile className="w-3.5 h-3.5" />
+                        <span>KIRIM UCAPAN & DOA BERKAH</span>
+                      </h3>
+
+                      <form onSubmit={handleSendMessage} className="space-y-3">
+                        <div>
+                          <label className="block text-stone-400 mb-0.5 font-bold uppercase text-[8px] font-mono">Hubungan Kerabat</label>
+                          <select 
+                            className="w-full px-3 py-2 border border-neutral-850 bg-neutral-900 text-white rounded-lg font-black"
+                            value={newMessage.relation}
+                            onChange={(e) => setNewMessage({ ...newMessage, relation: e.target.value })}
+                          >
+                            <option value="Kerabat Dekat / Sahabat">Kerabat Dekat / Sahabat</option>
+                            <option value="Keluarga Kandung / Besar">Keluarga Kandung / Besar</option>
+                            <option value="Rekan Kerja SMAN">Rekan Kerja Guru Sekolah</option>
+                            <option value="Tamu Kehormatan VIP">Tamu Kehormatan VIP</option>
+                          </select>
+                        </div>
+
+                        <div>
+                          <label className="block text-stone-400 mb-0.5 font-bold uppercase text-[8px] font-mono">Ucapan Selamat Utama</label>
+                          <input 
+                            type="text"
+                            required
+                            placeholder="Contoh: Happy wedding day Hanum & Luthfi!"
+                            className="w-full px-3 py-2 border border-neutral-850 bg-neutral-900 text-white rounded-lg"
+                            value={newMessage.message}
+                            onChange={(e) => setNewMessage({ ...newMessage, message: e.target.value })}
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-stone-400 mb-0.5 font-bold uppercase text-[8px] font-mono">Doa Berkat & Harapan</label>
+                          <textarea 
+                            rows={3}
+                            required
+                            placeholder="Tulis berkah barakah rumahtangga sakinah mawaddah..."
+                            className="w-full px-3 py-2 border border-neutral-850 bg-neutral-900 text-white rounded-lg"
+                            value={newMessage.prayer}
+                            onChange={(e) => setNewMessage({ ...newMessage, prayer: e.target.value })}
+                          />
+                        </div>
+
+                        <button
+                          type="submit"
+                          disabled={isSubmittingMessage}
+                          className="w-full py-2.5 bg-[#821E1E] text-white font-black tracking-widest uppercase rounded-lg shadow-md cursor-pointer hover:bg-red-700 transition"
+                        >
+                          {isSubmittingMessage ? 'PROSES ANALISA AI REPLIES...' : 'POST KE INSTA-STORY CARD'}
+                        </button>
+                      </form>
+                    </div>
+
+                  </div>
+                </section>
+              </React.Fragment>
+            );
+          }
+
+          // Fallback return null
+          return null;
+        })}
+
+        {/* Floating Wedding Cashless gift button at page bottom */}
+        <div id="tanda-kasih-digital" className="border-t border-neutral-800 pt-10 text-center space-y-4">
+          <div className="w-10 h-10 bg-red-950/40 text-[#dfb76c] border border-red-900/40 rounded-full flex items-center justify-center mx-auto mb-1">
+            <Gift className="w-5 h-5 text-[#dfb76c]" />
+          </div>
+          <h3 className="wedding-font-serif text-xl font-bold text-white">Tanda Kasih Digital</h3>
+          <p className="text-xs text-stone-450 max-w-sm mx-auto leading-relaxed">
+            Doa dan restu Anda adalah berkah mulia bagi rukun keluarga kami. Namun bagi yang berkenan mengirim kado digital cashless, silakan salin rekening berikut:
+          </p>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 max-w-lg mx-auto text-left text-xs font-mono">
+            {/* Bank Mandiri styled as an elegant Black Credit Card */}
+            <div className="p-5 bg-gradient-to-br from-[#070707] via-neutral-900 to-neutral-950 border border-neutral-800 rounded-2xl relative shadow-2xl overflow-hidden min-h-[170px] flex flex-col justify-between">
+              <div className="absolute top-0 right-0 w-24 h-24 bg-[#dfb76c]/5 rounded-full blur-xl pointer-events-none"></div>
+              
+              <div className="flex justify-between items-start">
+                <div>
+                  <span className="text-[8px] bg-red-950 text-[#dfb76c] border border-red-900/40 px-2 py-0.5 rounded font-bold uppercase block w-fit">BANK MANDIRI</span>
+                  {/* Microchip ornament */}
+                  <div className="w-8 h-6 bg-gradient-to-tr from-[#dfb76c]/40 to-yellow-500/10 rounded-sm border border-[#dfb76c]/20 mt-3 relative">
+                    <div className="absolute inset-1 border-r border-b border-[#dfb76c]/20"></div>
+                  </div>
+                </div>
+                {/* Mastercard-like circle design badge */}
+                <div className="flex -space-x-2 opacity-60">
+                  <div className="w-6 h-6 rounded-full bg-red-600"></div>
+                  <div className="w-6 h-6 rounded-full bg-amber-500 bg-opacity-70"></div>
+                </div>
+              </div>
+
+              <div className="mt-4">
+                <span className="text-[7.5px] text-stone-500 uppercase tracking-widest block font-bold leading-none">CARD NUMBER</span>
+                <div className="text-white font-bold text-sm tracking-wider mt-1 select-all">123-000-4567-890</div>
+              </div>
+
+              <div className="flex justify-between items-end mt-2.5">
+                <div>
+                  <span className="text-[7px] text-stone-500 uppercase tracking-widest block leading-none">CARDHOLDER</span>
+                  <div className="text-stone-300 font-bold uppercase text-[10px] mt-0.5 font-sans leading-none">Muhammad Luthfi</div>
+                </div>
+                <button 
+                  onClick={() => handleCopy('1230004567890', 'mandiri')}
+                  className="px-2.5 py-1 bg-neutral-900 hover:bg-neutral-850 border border-neutral-800 text-[#dfb76c] rounded-md font-bold text-[9px] uppercase cursor-pointer"
+                >
+                  {copiedAccount === 'mandiri' ? 'Copied' : 'Copy'}
+                </button>
+              </div>
+            </div>
+
+            {/* Bank BCA styled as an elegant Black Premium Credit Card */}
+            <div className="p-5 bg-gradient-to-br from-[#0c0d12] via-neutral-900 to-neutral-950 border border-neutral-800 rounded-2xl relative shadow-xl overflow-hidden min-h-[170px] flex flex-col justify-between">
+              <div className="absolute top-0 right-0 w-24 h-24 bg-red-500/5 rounded-full blur-xl pointer-events-none"></div>
+              
+              <div className="flex justify-between items-start">
+                <div>
+                  <span className="text-[8px] bg-red-950 text-red-400 border border-[#dfb76c]/20 px-2 py-0.5 rounded font-bold uppercase block w-fit">BANK BCA</span>
+                  {/* Microchip ornament */}
+                  <div className="w-8 h-6 bg-gradient-to-tr from-[#dfb76c]/40 to-yellow-500/10 rounded-sm border border-[#dfb76c]/20 mt-3 relative">
+                    <div className="absolute inset-1 border-r border-[#dfb76c]/20"></div>
+                  </div>
+                </div>
+                <div className="flex -space-x-2 opacity-60">
+                  <div className="w-6 h-6 rounded-full bg-red-600"></div>
+                  <div className="w-6 h-6 rounded-full bg-amber-500 bg-opacity-70"></div>
+                </div>
+              </div>
+
+              <div className="mt-4">
+                <span className="text-[7.5px] text-stone-500 uppercase tracking-widest block font-bold leading-none">CARD NUMBER</span>
+                <div className="text-white font-bold text-sm tracking-wider mt-1 select-all">860-0123-456</div>
+              </div>
+
+              <div className="flex justify-between items-end mt-2.5">
+                <div>
+                  <span className="text-[7px] text-stone-500 uppercase tracking-widest block leading-none">CARDHOLDER</span>
+                  <div className="text-stone-300 font-bold uppercase text-[10px] mt-0.5 font-sans leading-none">Siti Hanum Handayani</div>
+                </div>
+                <button 
+                  onClick={() => handleCopy('8600123456', 'bca')}
+                  className="px-2.5 py-1 bg-neutral-900 hover:bg-neutral-850 border border-neutral-800 text-[#dfb76c] rounded-md font-bold text-[9px] uppercase cursor-pointer"
+                >
+                  {copiedAccount === 'bca' ? 'Copied' : 'Copy'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
 
       </div>
     </div>
