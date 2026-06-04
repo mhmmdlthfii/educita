@@ -4,7 +4,7 @@ import {
   Map, Copy, Check, Users, Users2, Clock, Sparkles, 
   AlertCircle, Play, Pause, Volume2, VolumeX, Ticket, 
   ChevronLeft, ChevronRight, HelpCircle, Film, Trophy, 
-  Camera, User, Smile, Sparkle, Compass
+  Camera, User, Smile, Sparkle, Compass, X
 } from 'lucide-react';
 import { weddingDb, WeddingSectionType, WeddingSettingsType, WeddingGuestbookMessage, WeddingRSVPTicket, SouvenirRewardType } from '../lib/weddingDb';
 
@@ -163,6 +163,7 @@ export default function WeddingView({ toGuest, slug = 'hanum-luthfi' }: WeddingV
   const [loadingPct, setLoadingPct] = useState<number>(0);
   const [selectedReview, setSelectedReview] = useState<any | null>(null);
   const [carouselIdx, setCarouselIdx] = useState(2);
+  const [isAllWalletsModalOpen, setIsAllWalletsModalOpen] = useState(false);
 
   // AI Route Assistant States
   const [routeStartLocation, setRouteStartLocation] = useState('');
@@ -585,9 +586,8 @@ export default function WeddingView({ toGuest, slug = 'hanum-luthfi' }: WeddingV
 
             {/* Custom Hello Guest Message (Requirement 2) */}
             <div className="pt-2 text-center">
-              <span className="text-[9.5px] tracking-[0.2em] font-mono uppercase text-[#dfb76c] font-black block">Kepada Yth.</span>
               <h3 className="font-serif text-lg sm:text-xl font-bold tracking-wide mt-1.5 capitalize text-white">
-                hello, <span className="italic font-normal text-[#dfb76c]">{guestNameLabel}</span>
+                Hello, <span className="italic font-normal text-[#dfb76c]">{guestNameLabel}</span>
               </h3>
             </div>
 
@@ -871,7 +871,7 @@ export default function WeddingView({ toGuest, slug = 'hanum-luthfi' }: WeddingV
             {/* Friend Details Header */}
             <div className="flex items-center gap-3">
               <div className="w-12 h-12 rounded-full border-2 border-[#821E1E]/40 bg-neutral-950 flex items-center justify-center text-2xl shadow-md overflow-hidden select-none">
-                {getAvatarView(selectedAvatar)}
+                {getAvatarView(selectedReview.avatar)}
               </div>
               <div>
                 <h4 className="font-bold text-white text-sm">{selectedReview.fullName}</h4>
@@ -1083,7 +1083,15 @@ export default function WeddingView({ toGuest, slug = 'hanum-luthfi' }: WeddingV
                 <div className="relative w-full overflow-hidden py-4 select-none">
                   <div className="flex justify-center items-center h-[340px] relative">
                     {CINEMATIC_CHAPTERS.map((chap, idx) => {
-                      const offset = idx - carouselIdx;
+                      const total = CINEMATIC_CHAPTERS.length;
+                      let offset = idx - carouselIdx;
+                      // Handle modular wrap-around for infinite carousel loop
+                      if (offset > total / 2) {
+                        offset -= total;
+                      } else if (offset < -total / 2) {
+                        offset += total;
+                      }
+                      
                       const isActive = idx === carouselIdx;
                       
                       if (Math.abs(offset) > 2) return null;
@@ -1298,13 +1306,37 @@ export default function WeddingView({ toGuest, slug = 'hanum-luthfi' }: WeddingV
           // ==========================================
           if (sec.type === 'gallery') {
             const galleryImages = [
-              'https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&q=80&w=500',
-              'https://images.unsplash.com/photo-1515934751635-c81c6bc9a2d8?auto=format&fit=crop&q=80&w=500',
-              'https://images.unsplash.com/photo-1606800052052-a08af7148866?auto=format&fit=crop&q=80&w=500',
-              'https://images.unsplash.com/photo-1524661135-423995f22d0b?auto=format&fit=crop&q=80&w=500',
-              'https://images.unsplash.com/photo-1532712938310-34cb3982ef74?auto=format&fit=crop&q=80&w=500',
-              'https://images.unsplash.com/photo-1465495976277-4387d4b0b4c6?auto=format&fit=crop&q=80&w=500'
+              'https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&q=80&w=600',
+              'https://images.unsplash.com/photo-1515934751635-c81c6bc9a2d8?auto=format&fit=crop&q=80&w=600',
+              'https://images.unsplash.com/photo-1606800052052-a08af7148866?auto=format&fit=crop&q=80&w=600',
+              'https://images.unsplash.com/photo-1524661135-423995f22d0b?auto=format&fit=crop&q=80&w=600',
+              'https://images.unsplash.com/photo-1532712938310-34cb3982ef74?auto=format&fit=crop&q=80&w=600',
+              'https://images.unsplash.com/photo-1465495976277-4387d4b0b4c6?auto=format&fit=crop&q=80&w=600',
+              'https://images.unsplash.com/photo-1511285560929-80b456fea0bc?auto=format&fit=crop&q=80&w=600',
+              'https://images.unsplash.com/photo-1583939003579-730e3918a45a?auto=format&fit=crop&q=80&w=600',
+              'https://images.unsplash.com/photo-1519225495810-7512c696505a?auto=format&fit=crop&q=80&w=600',
+              'https://images.unsplash.com/photo-1502444330042-d1a1ddf9bb5b?auto=format&fit=crop&q=80&w=600',
+              'https://images.unsplash.com/photo-1507504038482-76210061e0bb?auto=format&fit=crop&q=80&w=600',
+              'https://images.unsplash.com/photo-1591604466107-ec97de577aff?auto=format&fit=crop&q=80&w=600'
             ];
+
+            const getSpanClass = (idx: number) => {
+              switch (idx) {
+                case 0: return 'col-span-2 row-span-2';
+                case 1: return 'col-span-1 row-span-1';
+                case 2: return 'col-span-1 row-span-1';
+                case 3: return 'col-span-1 row-span-2';
+                case 4: return 'col-span-2 row-span-1';
+                case 5: return 'col-span-1 row-span-1';
+                case 6: return 'col-span-1 row-span-1';
+                case 7: return 'col-span-2 row-span-1';
+                case 8: return 'col-span-1 row-span-2';
+                case 9: return 'col-span-2 row-span-1';
+                case 10: return 'col-span-1 row-span-1';
+                case 11: return 'col-span-2 row-span-1';
+                default: return 'col-span-1 row-span-1';
+              }
+            };
 
             return (
               <section key={sec.id} className="space-y-6">
@@ -1317,20 +1349,27 @@ export default function WeddingView({ toGuest, slug = 'hanum-luthfi' }: WeddingV
                   </p>
                 </div>
 
-                {/* Grid view */}
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                {/* Asymmetric Bento / Masonry Grid without empty gaps */}
+                <div className="grid grid-cols-3 gap-3 auto-rows-[120px] sm:auto-rows-[150px]">
                   {galleryImages.map((img, index) => (
                     <div 
                       key={index} 
                       onClick={() => setLightboxImage(img)}
-                      className="aspect-square rounded-2xl overflow-hidden hover:scale-102 hover:shadow-lg transition-all duration-300 cursor-pointer shadow-md bg-neutral-900"
+                      className={`${getSpanClass(index)} relative group rounded-2xl overflow-hidden hover:scale-[1.03] hover:ring-2 hover:ring-[#dfb76c]/40 hover:shadow-[0_15px_30px_rgba(130,30,30,0.4)] transition-all duration-300 cursor-pointer shadow-md bg-neutral-900`}
                     >
                       <img 
                         src={img} 
                         alt="Prewedding item" 
-                        className="w-full h-full object-cover"
+                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                         referrerPolicy="no-referrer"
                       />
+                      {/* Interactive Hover Overlay (Upgraded Anim) */}
+                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                        <div className="translate-y-4 group-hover:translate-y-0 transition-transform duration-300 flex items-center gap-1.5 bg-black/60 backdrop-blur-xs px-3 py-1.5 rounded-full border border-white/10">
+                          <Compass className="w-3.5 h-3.5 text-[#dfb76c] animate-[spin_5s_linear_infinite]" />
+                          <span className="text-[10px] tracking-wider text-stone-200 font-mono font-bold uppercase">VIEW PHOTO</span>
+                        </div>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -1758,25 +1797,7 @@ export default function WeddingView({ toGuest, slug = 'hanum-luthfi' }: WeddingV
                     </div>
                   )}
 
-                  {/* Reward List and probabilistic details */}
-                  <div className="pt-5 text-left max-w-md mx-auto">
-                    <span className="text-[9px] text-[#dfb76c] font-bold uppercase tracking-widest font-mono">
-                      📋 TINGKAT AKURASI & STOCK HADIAH SOUVENIR:
-                    </span>
-                    <div className="mt-2.5 space-y-2 text-[10px] text-stone-450 font-mono">
-                      {rewardsList.map(r => (
-                        <div key={r.id} className="flex justify-between items-center text-xs pb-1.5">
-                          <span className="font-bold text-stone-200">{r.title}</span>
-                          <div className="flex items-center gap-2">
-                            <span className="bg-neutral-900 text-stone-500 font-bold px-1.5 py-0.5 rounded text-[10px]">Prob: {r.probability}%</span>
-                            <span className={`px-1.5 py-0.5 rounded font-black text-[10px] ${r.remaining > 0 ? 'bg-red-950/40 text-red-400' : 'bg-stone-900 text-stone-600'}`}>
-                              {r.remaining > 0 ? `Stock: ${r.remaining} Pcs` : 'STOK HABIS'}
-                            </span>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
+                  {/* Reward List is hidden for guests (Requirement 4) and editable in the Editor view */}
 
                 </div>
               </section>
@@ -1843,21 +1864,30 @@ export default function WeddingView({ toGuest, slug = 'hanum-luthfi' }: WeddingV
                   
                   {/* Scrollable round avatars train */}
                   <div className="flex gap-4 overflow-x-auto py-4 px-2 justify-start sm:justify-center scrollbar-hide max-w-xl mx-auto pb-6">
-                    {/* Access to globally populated friend reviews */}
-                    {FRIEND_STORIES.map((story, idx) => (
+                    {/* Dynamic integration: Maps directly over guestBook messages! (Requirement 5) */}
+                    {guestBook.map((story, idx) => (
                       <button 
-                        key={idx}
-                        onClick={() => setSelectedReview(story)}
-                        className="flex flex-col items-center gap-2 shrink-0 group focus:outline-none cursor-pointer"
+                        key={story.id || idx}
+                        onClick={() => {
+                          setActiveStoryIdx(idx);
+                          setStoryProgress(0); // Reset IG-story timer progress bar on user tap
+                        }}
+                        className={`flex flex-col items-center gap-2 shrink-0 group focus:outline-none cursor-pointer transition-all ${
+                          idx === activeStoryIdx ? 'scale-105' : 'opacity-70 hover:opacity-100'
+                        }`}
                       >
-                        <div className="w-14 h-14 rounded-full p-0.5 bg-gradient-to-tr from-[#dfb76c] via-red-500 to-amber-700 group-hover:scale-[1.05] transition-all shadow-md">
+                        <div className={`w-14 h-14 rounded-full p-0.5 bg-gradient-to-tr ${
+                          idx === activeStoryIdx 
+                            ? 'from-red-500 via-amber-500 to-yellow-400 ring-2 ring-[#dfb76c]' 
+                            : 'from-neutral-700 via-neutral-600 to-stone-500'
+                        } group-hover:scale-[1.05] transition-all shadow-md`}>
                           <div className="w-full h-full rounded-full overflow-hidden bg-neutral-900 flex items-center justify-center text-lg">
-                            {getAvatarView(selectedAvatar)}
+                            {getAvatarView(story.avatar)}
                           </div>
                         </div>
                         <div className="text-center">
-                          <span className="text-[10.5px] font-bold text-stone-200 block max-w-[80px] truncate">{story.name}</span>
-                          <span className="text-[8px] font-mono text-red-500 block uppercase font-bold tracking-wider">{story.fullName.split(' ')[0]}</span>
+                          <span className="text-[10.5px] font-black text-stone-200 block max-w-[80px] truncate">{story.name}</span>
+                          <span className="text-[8px] font-mono text-red-500 block uppercase font-bold tracking-wider">{story.relation || 'Sahabat'}</span>
                         </div>
                       </button>
                     ))}
@@ -1901,7 +1931,7 @@ export default function WeddingView({ toGuest, slug = 'hanum-luthfi' }: WeddingV
                           <div className="flex items-center justify-between z-10 mt-3 bg-neutral-950 p-2 rounded-xl border border-neutral-800">
                             <div className="flex items-center gap-2 text-xs">
                               <div className="w-8 h-8 rounded-full border border-red-900/60 overflow-hidden flex items-center justify-center bg-black shrink-0 select-none">
-                                {getAvatarView(selectedAvatar)}
+                                {getAvatarView(currentStory.avatar)}
                               </div>
                               <div>
                                 <div className="font-black text-white truncate max-w-[130px] leading-none">
@@ -2065,93 +2095,259 @@ export default function WeddingView({ toGuest, slug = 'hanum-luthfi' }: WeddingV
         })}
 
         {/* Floating Wedding Cashless gift button at page bottom */}
-        <div id="tanda-kasih-digital" className="pt-10 text-center space-y-4">
+        <div id="tanda-kasih-digital" className="pt-10 text-center space-y-4 px-4 pb-4">
           <div className="w-10 h-10 bg-red-950/40 text-[#dfb76c] rounded-full flex items-center justify-center mx-auto mb-1">
             <Gift className="w-5 h-5 text-[#dfb76c]" />
           </div>
-          <h3 className="wedding-font-serif text-xl font-bold text-white">Tanda Kasih Digital</h3>
-          <p className="text-xs text-stone-450 max-w-sm mx-auto leading-relaxed">
+          <h3 className="font-serif text-xl font-bold text-white">Tanda Kasih Digital</h3>
+          <p className="text-xs text-stone-400 max-w-sm mx-auto leading-relaxed font-sans">
             Doa dan restu Anda adalah berkah mulia bagi rukun keluarga kami. Namun bagi yang berkenan mengirim kado digital cashless, silakan salin rekening berikut:
           </p>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 max-w-lg mx-auto text-left text-xs font-mono">
-            {/* Bank Mandiri styled as an elegant Black Credit Card */}
-            <div className="p-5 bg-gradient-to-br from-[#070707] via-neutral-900 to-neutral-950 rounded-2xl relative shadow-[0_20px_50px_rgba(0,0,0,0.65)] overflow-hidden min-h-[170px] flex flex-col justify-between">
-              <div className="absolute top-0 right-0 w-24 h-24 bg-[#dfb76c]/5 rounded-full blur-xl pointer-events-none"></div>
-              
-              <div className="flex justify-between items-start">
-                <div>
-                  <span className="text-[8px] bg-red-950 text-[#dfb76c] px-2 py-0.5 rounded font-bold uppercase block w-fit">BANK MANDIRI</span>
-                  {/* Microchip ornament */}
-                  <div className="w-8 h-6 bg-gradient-to-tr from-[#dfb76c]/40 to-yellow-500/10 rounded-sm mt-3 relative">
-                    <div className="absolute inset-1 opacity-20"></div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 max-w-lg mx-auto text-left text-xs font-mono pt-4">
+            {(() => {
+              const walletsList = settings?.wallets || [
+                { id: 'w-1', bankName: 'BCA', accountNumber: '8600123456', accountHolder: 'Hanum Muftiani' },
+                { id: 'w-2', bankName: 'Mandiri', accountNumber: '1230004567890', accountHolder: 'Muhammad Luthfi' }
+              ];
+              // Show up to first 2 wallets in front page
+              const frontWallets = walletsList.slice(0, 2);
+
+              const BANK_STYLES: Record<string, { bg: string; text: string; border: string; label: string }> = {
+                'BCA': { bg: 'from-[#053e7a] via-[#0950a2] to-[#0d64cc]', text: 'text-white', border: 'border-[#0a1c38]/40', label: 'BANK BCA' },
+                'Bank Jago': { bg: 'from-[#fdbc14] via-[#fcd116] to-[#edd350]', text: 'text-[#1c1917]', border: 'border-[#e0b70c]/50', label: 'BANK JAGO' },
+                'BRI': { bg: 'from-[#003566] via-[#00529c] to-[#007cc7]', text: 'text-white', border: 'border-[#dfb76c]/40', label: 'BANK BRI' },
+                'Mandiri': { bg: 'from-[#143254] via-[#1c3f68] to-[#2b5c92]', text: 'text-white', border: 'border-[#dfb76c]/40', label: 'BANK MANDIRI' },
+                'Bank Jateng': { bg: 'from-[#8b0000] via-[#c62828] to-[#e53935]', text: 'text-white', border: 'border-yellow-500/40', label: 'BANK JATENG' },
+                'SeaBank': { bg: 'from-[#cc4900] via-[#ff5a00] to-[#ff7e33]', text: 'text-white', border: 'border-orange-600/40', label: 'SEABANK' },
+                'Krom Bank': { bg: 'from-[#421d5f] via-[#652d90] to-[#8c3fc6]', text: 'text-white', border: 'border-purple-400/40', label: 'KROM BANK' },
+                'Gopay': { bg: 'from-[#007f0e] via-[#00aa13] to-[#25d33a]', text: 'text-white', border: 'border-emerald-500/40', label: 'GOPAY' },
+                'Shopeepay': { bg: 'from-[#bf3e23] via-[#ee4d2d] to-[#ff6f51]', text: 'text-white', border: 'border-[#ff6f51]/40', label: 'SHOPEEPAY' }
+              };
+
+              return frontWallets.map(w => {
+                const style = BANK_STYLES[w.bankName] || { bg: 'from-neutral-850 via-neutral-900 to-neutral-950', text: 'text-white', border: 'border-white/10', label: w.bankName.toUpperCase() };
+                return (
+                  <div key={w.id} className={`p-5 bg-gradient-to-br ${style.bg} rounded-2xl relative shadow-[0_20px_50px_rgba(0,0,0,0.65)] overflow-hidden min-h-[170px] flex flex-col justify-between border ${style.border}`}>
+                    <div className="absolute top-0 right-0 w-24 h-24 bg-white/5 rounded-full blur-xl pointer-events-none"></div>
+                    
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <span className={`text-[8.5px] font-black font-sans px-2.5 py-1 rounded tracking-wider uppercase block w-fit shadow-xs ${style.text === 'text-white' ? 'bg-black/30 text-white' : 'bg-white/40 text-black'}`}>
+                          {style.label}
+                        </span>
+                        {/* Microchip ornament */}
+                        <div className="w-8 h-6 bg-gradient-to-tr from-[#dfb76c]/40 to-yellow-500/10 rounded-sm mt-3 relative">
+                          <div className="absolute inset-1 opacity-20"></div>
+                        </div>
+                      </div>
+                      {/* Card layout details */}
+                      <div className="flex -space-x-2 opacity-60">
+                        <div className="w-6 h-6 rounded-full bg-stone-100/10"></div>
+                        <div className="w-6 h-6 rounded-full bg-stone-100/20"></div>
+                      </div>
+                    </div>
+
+                    <div className="mt-4">
+                      <span className="text-[7.5px] text-stone-300/70 uppercase tracking-widest block font-bold leading-none font-sans">NOMOR REKENING</span>
+                      <div className="text-white font-bold text-sm tracking-wider mt-1 select-all">{w.accountNumber}</div>
+                    </div>
+
+                    <div className="flex justify-between items-end mt-2.5 font-sans">
+                      <div>
+                        <span className="text-[7px] text-stone-300/60 uppercase tracking-widest block leading-none">NAMA PENERIMA</span>
+                        <div className="text-stone-100 font-extrabold uppercase text-[10px] mt-1 leading-none">{w.accountHolder}</div>
+                      </div>
+                      <button 
+                        onClick={() => handleCopy(w.accountNumber, w.id)}
+                        className="px-2.5 py-1.5 bg-black/40 hover:bg-black/60 text-[#dfb76c] border border-white/10 rounded-md font-bold text-[9px] uppercase cursor-pointer flex items-center gap-1 transition-all"
+                      >
+                        {copiedAccount === w.id ? (
+                          <>
+                            <Check className="w-3 h-3 text-green-400" />
+                            <span>COPIED</span>
+                          </>
+                        ) : (
+                          <>
+                            <Copy className="w-3 h-3" />
+                            <span>COPY</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                );
+              });
+            })()}
+          </div>
+
+          {/* Home Address Section for Physical Gifts (Requirement 1) */}
+          {settings?.giftAddress && (
+            <div className="max-w-lg mx-auto mt-6 bg-[#0c0c0c] border border-neutral-850 p-5 rounded-2xl text-left shadow-lg select-text">
+              <div className="flex items-start gap-3">
+                <div className="w-9 h-9 rounded-xl bg-red-950/40 text-[#dfb76c] flex items-center justify-center shrink-0 border border-red-900/30">
+                  <MapPin className="w-4 h-4" />
+                </div>
+                <div className="flex-1 space-y-1">
+                  <span className="text-[8.5px] text-[#dfb76c] font-black uppercase tracking-widest block font-mono">📍 ALAMAT PENGIRIMAN KADO FISIK:</span>
+                  <p className="text-stone-305 text-xs leading-relaxed font-sans mt-1">
+                    {settings.giftAddress}
+                  </p>
+                  <div className="pt-2">
+                    <button
+                      onClick={() => handleCopy(settings.giftAddress || '', 'giftAddress')}
+                      className="px-2.5 py-1 bg-neutral-900 hover:bg-neutral-850 text-[#dfb76c] border border-neutral-800 rounded-md font-black text-[9px] uppercase cursor-pointer inline-flex items-center gap-1 font-mono transition-all"
+                    >
+                      {copiedAccount === 'giftAddress' ? (
+                        <>
+                          <Check className="w-2.5 h-2.5 text-green-400" />
+                          <span>ALAMAT TERSALIN</span>
+                        </>
+                      ) : (
+                        <>
+                          <Copy className="w-2.5 h-2.5" />
+                          <span>SALIN ALAMAT</span>
+                        </>
+                      )}
+                    </button>
                   </div>
                 </div>
-                {/* Mastercard-like circle design badge */}
-                <div className="flex -space-x-2 opacity-60">
-                  <div className="w-6 h-6 rounded-full bg-red-600"></div>
-                  <div className="w-6 h-6 rounded-full bg-amber-500 bg-opacity-70"></div>
-                </div>
-              </div>
-
-              <div className="mt-4">
-                <span className="text-[7.5px] text-stone-500 uppercase tracking-widest block font-bold leading-none">CARD NUMBER</span>
-                <div className="text-white font-bold text-sm tracking-wider mt-1 select-all">123-000-4567-890</div>
-              </div>
-
-              <div className="flex justify-between items-end mt-2.5">
-                <div>
-                  <span className="text-[7px] text-stone-500 uppercase tracking-widest block leading-none">CARDHOLDER</span>
-                  <div className="text-stone-300 font-bold uppercase text-[10px] mt-0.5 font-sans leading-none">Muhammad Luthfi</div>
-                </div>
-                <button 
-                  onClick={() => handleCopy('1230004567890', 'mandiri')}
-                  className="px-2.5 py-1 bg-neutral-900 hover:bg-neutral-850 text-[#dfb76c] rounded-md font-bold text-[9px] uppercase cursor-pointer"
-                >
-                  {copiedAccount === 'mandiri' ? 'Copied' : 'Copy'}
-                </button>
               </div>
             </div>
+          )}
 
-            {/* Bank BCA styled as an elegant Black Premium Credit Card */}
-            <div className="p-5 bg-gradient-to-br from-[#0c0d12] via-neutral-900 to-neutral-950 rounded-2xl relative shadow-[0_20px_50px_rgba(0,0,0,0.65)] overflow-hidden min-h-[170px] flex flex-col justify-between">
-              <div className="absolute top-0 right-0 w-24 h-24 bg-red-500/5 rounded-full blur-xl pointer-events-none"></div>
-              
-              <div className="flex justify-between items-start">
-                <div>
-                  <span className="text-[8px] bg-red-950 text-red-400 px-2 py-0.5 rounded font-bold uppercase block w-fit">BANK BCA</span>
-                  {/* Microchip ornament */}
-                  <div className="w-8 h-6 bg-gradient-to-tr from-[#dfb76c]/40 to-yellow-500/10 rounded-sm mt-3 relative">
-                    <div className="absolute inset-1 opacity-20"></div>
-                  </div>
-                </div>
-                <div className="flex -space-x-2 opacity-60">
-                  <div className="w-6 h-6 rounded-full bg-red-600"></div>
-                  <div className="w-6 h-6 rounded-full bg-amber-500 bg-opacity-70"></div>
-                </div>
-              </div>
+          {/* All Wallet Toggle Menu/Button */}
+          <div className="pt-3">
+            <button
+              onClick={() => setIsAllWalletsModalOpen(true)}
+              className="px-5 py-2.5 bg-neutral-950 hover:bg-neutral-900 border border-neutral-850 text-stone-200 hover:text-[#dfb76c] rounded-full font-bold text-xs uppercase tracking-wider cursor-pointer inline-flex items-center gap-2 transition-all shadow-md group"
+            >
+              <Users2 className="w-4 h-4 text-[#dfb76c] group-hover:scale-110 transition-transform" />
+              <span>Lihat Semua Rekening / E-Wallet</span>
+            </button>
+          </div>
+        </div>
 
-              <div className="mt-4">
-                <span className="text-[7.5px] text-stone-500 uppercase tracking-widest block font-bold leading-none">CARD NUMBER</span>
-                <div className="text-white font-bold text-sm tracking-wider mt-1 select-all">860-0123-456</div>
-              </div>
+        {/* Closing Thank You & Doa Section (Requirement 3) */}
+        <div className="pt-16 pb-14 text-center space-y-6 max-w-xl mx-auto px-6">
+          <span className="font-serif text-3xl text-[#dfb76c] block italic font-bold">Thankyou!</span>
+          <p className="text-xs text-stone-400 leading-relaxed font-sans max-w-md mx-auto">
+            Menjadi sebuah kebahagiaan bagi kami apabila Bapak/Ibu/Saudara/i berkenan hadir dalam hari bahagia ini. Terima kasih atas segala ucapan, doa, dan perhatian yang diberikan.
+          </p>
+          <div className="space-y-1.5 pt-4">
+            <p className="text-[9px] tracking-[0.25em] text-[#dfb76c] font-black font-mono">SEE YOU ON OUR BIG DAY!</p>
+            <h3 className="font-serif text-2xl font-black text-white">Hanum & Luthfi</h3>
+          </div>
+        </div>
 
-              <div className="flex justify-between items-end mt-2.5">
-                <div>
-                  <span className="text-[7px] text-stone-500 uppercase tracking-widest block leading-none">CARDHOLDER</span>
-                  <div className="text-stone-300 font-bold uppercase text-[10px] mt-0.5 font-sans leading-none">Siti Hanum Handayani</div>
+        {/* Beautiful Custom Footer with Love and Custom Styled Red-to-Orange Gradient Text (Requirement 4) */}
+        <div className="w-full border-t border-white/5 py-8 text-center text-stone-500 text-[11px] font-medium tracking-wide">
+          <div className="flex items-center justify-center gap-1 flex-wrap">
+            <span>Made with Love</span>
+            <span className="text-red-500 animate-pulse text-[12px] mx-0.5">❤️</span>
+            <span>—</span>
+            <span className="font-extrabold bg-gradient-to-r from-red-500 to-orange-500 bg-clip-text text-transparent select-text">
+              Muhammad Luthfi
+            </span>
+          </div>
+        </div>
+
+        {/* All Wallets / Accounts Modal Popup (Requirement 1) */}
+        {isAllWalletsModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fade-in">
+            <div className="relative bg-[#0c0c0c] border border-neutral-850 rounded-[28px] max-w-md w-full overflow-hidden shadow-2xl flex flex-col max-h-[85vh]">
+              {/* Modal Header */}
+              <div className="p-5 border-b border-neutral-850/60 flex justify-between items-center bg-neutral-950">
+                <div className="flex items-center gap-2">
+                  <Gift className="w-4 h-4 text-[#dfb76c]" />
+                  <h4 className="font-serif text-lg font-black text-white">Semua Rekening & Dompet</h4>
                 </div>
-                <button 
-                  onClick={() => handleCopy('8600123456', 'bca')}
-                  className="px-2.5 py-1 bg-neutral-900 hover:bg-neutral-850 text-[#dfb76c] rounded-md font-bold text-[9px] uppercase cursor-pointer"
+                <button
+                  onClick={() => setIsAllWalletsModalOpen(false)}
+                  className="w-8 h-8 rounded-full bg-neutral-900 border border-neutral-800 hover:bg-neutral-850 text-stone-400 hover:text-white flex items-center justify-center cursor-pointer transition-all"
                 >
-                  {copiedAccount === 'bca' ? 'Copied' : 'Copy'}
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* Modal Body: Scrollable list of wallets */}
+              <div className="p-5 overflow-y-auto space-y-4 scrollbar-hide flex-1">
+                <p className="text-[11px] text-stone-400 leading-relaxed font-sans text-center max-w-xs mx-auto pb-2">
+                  Berikut daftar lengkap rekening bank dan akun dompet digital terdaftar kami:
+                </p>
+
+                {(() => {
+                  const walletsList = settings?.wallets || [
+                    { id: 'w-1', bankName: 'BCA', accountNumber: '8600123456', accountHolder: 'Hanum Muftiani' },
+                    { id: 'w-2', bankName: 'Mandiri', accountNumber: '1230004567890', accountHolder: 'Muhammad Luthfi' }
+                  ];
+
+                  const BANK_STYLES: Record<string, { bg: string; text: string; border: string; label: string }> = {
+                    'BCA': { bg: 'from-[#053e7a] via-[#0950a2] to-[#0d64cc]', text: 'text-white', border: 'border-[#0a5aa2]/40', label: 'BANK BCA' },
+                    'Bank Jago': { bg: 'from-[#fdbc14] via-[#fcd116] to-[#edd350]', text: 'text-[#1c1917]', border: 'border-[#e0b70c]/50', label: 'BANK JAGO' },
+                    'BRI': { bg: 'from-[#003566] via-[#00529c] to-[#007cc7]', text: 'text-white', border: 'border-orange-500/40', label: 'BANK BRI' },
+                    'Mandiri': { bg: 'from-[#143254] via-[#1c3f68] to-[#2b5c92]', text: 'text-white', border: 'border-[#dfb76c]/40', label: 'BANK MANDIRI' },
+                    'Bank Jateng': { bg: 'from-[#8b0000] via-[#c62828] to-[#e53935]', text: 'text-white', border: 'border-yellow-500/40', label: 'BANK JATENG' },
+                    'SeaBank': { bg: 'from-[#cc4900] via-[#ff5a00] to-[#ff7e33]', text: 'text-white', border: 'border-orange-600/40', label: 'SEABANK' },
+                    'Krom Bank': { bg: 'from-[#421d5f] via-[#652d90] to-[#8c3fc6]', text: 'text-white', border: 'border-purple-400/40', label: 'KROM BANK' },
+                    'Gopay': { bg: 'from-[#007f0e] via-[#00aa13] to-[#25d33a]', text: 'text-white', border: 'border-emerald-500/40', label: 'GOPAY' },
+                    'Shopeepay': { bg: 'from-[#bf3e23] via-[#ee4d2d] to-[#ff6f51]', text: 'text-white', border: 'border-[#ff6f51]/40', label: 'SHOPEEPAY' }
+                  };
+
+                  return walletsList.map(w => {
+                    const style = BANK_STYLES[w.bankName] || { bg: 'from-neutral-800 via-neutral-900 to-neutral-950', text: 'text-white', border: 'border-white/10', label: w.bankName.toUpperCase() };
+                    return (
+                      <div key={w.id} className={`p-4 bg-gradient-to-br ${style.bg} rounded-xl relative shadow-md overflow-hidden flex flex-col justify-between border ${style.border}`}>
+                        <div className="absolute top-0 right-0 w-16 h-16 bg-white/5 rounded-full blur-lg pointer-events-none"></div>
+                        
+                        <div className="flex justify-between items-center">
+                          <span className={`text-[8px] font-black font-sans px-2 py-0.5 rounded tracking-wider uppercase block w-fit ${style.text === 'text-white' ? 'bg-black/35 text-white' : 'bg-white/45 text-black'}`}>
+                            {style.label}
+                          </span>
+                          <span className="font-bold text-[8px] opacity-40 uppercase tracking-widest font-mono text-white">Cashless Gift</span>
+                        </div>
+
+                        <div className="mt-3">
+                          <div className="text-white font-bold text-xs tracking-wider select-all">{w.accountNumber}</div>
+                          <div className="text-[9px] text-stone-200/90 font-sans mt-0.5 font-bold uppercase truncate">{w.accountHolder}</div>
+                        </div>
+
+                        <div className="flex justify-end mt-2 animate-pulse-once">
+                          <button 
+                            onClick={() => handleCopy(w.accountNumber, w.id)}
+                            className="px-2 py-1 bg-black/45 hover:bg-black/60 text-[#dfb76c] border border-white/10 rounded-md font-bold text-[8px] uppercase cursor-pointer flex items-center gap-1 transition-all"
+                          >
+                            {copiedAccount === w.id ? (
+                              <>
+                                <Check className="w-2.5 h-2.5 text-green-450" />
+                                <span>COPIED</span>
+                              </>
+                            ) : (
+                              <>
+                                <Copy className="w-2.5 h-2.5" />
+                                <span>COPY</span>
+                              </>
+                            )}
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  });
+                })()}
+              </div>
+
+              {/* Modal Footer */}
+              <div className="p-4 bg-neutral-950 border-t border-neutral-850/60 text-center">
+                <button
+                  onClick={() => setIsAllWalletsModalOpen(false)}
+                  className="px-4 py-1.5 bg-[#821E1E] hover:bg-red-700 text-white font-black text-[10px] tracking-widest uppercase rounded-full cursor-pointer transition-all"
+                >
+                  Tutup Tampilan
                 </button>
               </div>
             </div>
           </div>
-        </div>
-
+        )}
       </div>
     </div>
   );

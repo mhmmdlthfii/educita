@@ -12,6 +12,13 @@ export interface WeddingSectionType {
   order: number;
 }
 
+export interface WeddingWalletType {
+  id: string;
+  bankName: 'BCA' | 'BRI' | 'Mandiri' | 'Bank Jateng' | 'Bank Jago' | 'SeaBank' | 'Krom Bank' | 'Gopay' | 'Shopeepay';
+  accountNumber: string;
+  accountHolder: string;
+}
+
 export interface WeddingSettingsType {
   slug: string;
   themePreset: 'luxury_glass' | 'emerald_gold' | 'classic_wood' | 'minimal_white' | 'royal_magenta';
@@ -23,6 +30,8 @@ export interface WeddingSettingsType {
   coupleDisplayTitle: string;
   eventDate: string;
   seatCount: number;
+  giftAddress?: string;
+  wallets?: WeddingWalletType[];
 }
 
 export interface WeddingGuestbookMessage {
@@ -98,9 +107,9 @@ const DEFAULT_SECTIONS: WeddingSectionType[] = [
   {
     id: 'sec-bride',
     type: 'bride',
-    title: 'Hanum Muftiani, S.Kom.',
+    title: 'Hanum Muftiani, S.Pd., Gr',
     subtitle: 'Hanum',
-    description: 'Putri Pertama Tercinta dari keluarga terhormat: Bapak H. Bambang Susilo & Ibu Hj. Hartati (Semarang, Jawa Tengah)',
+    description: 'Putri Keempat dari Bapak H. Sa\'dun Makhali & Ibu Hj. Ulil Faekoh (Jepara, Jawa Tengah)',
     mediaUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=350',
     isEnabled: true,
     order: 2
@@ -108,9 +117,9 @@ const DEFAULT_SECTIONS: WeddingSectionType[] = [
   {
     id: 'sec-groom',
     type: 'groom',
-    title: 'Muhammad Luthfi, S.Pd.',
+    title: 'Muhammad Luthfi',
     subtitle: 'Luthfi',
-    description: 'Putra Kedua Tercinta dari keluarga terhormat: Bapak H. Abdurrahman & Ibu Hj. Aminah (Kudus, Jawa Tengah)',
+    description: 'Putra Kedua dari Bapak dan Ibu (Jepara, Jawa Tengah)',
     mediaUrl: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&q=80&w=350',
     isEnabled: true,
     order: 3
@@ -172,6 +181,11 @@ const DEFAULT_SECTIONS: WeddingSectionType[] = [
   }
 ];
 
+const DEFAULT_WALLETS: WeddingWalletType[] = [
+  { id: 'w-1', bankName: 'BCA', accountNumber: '8600123456', accountHolder: 'Hanum Muftiani' },
+  { id: 'w-2', bankName: 'Mandiri', accountNumber: '1230004567890', accountHolder: 'Muhammad Luthfi' }
+];
+
 const DEFAULT_SETTINGS: WeddingSettingsType = {
   slug: 'hanum-luthfi',
   themePreset: 'luxury_glass',
@@ -182,7 +196,9 @@ const DEFAULT_SETTINGS: WeddingSettingsType = {
   hasMusicAutoPlay: true,
   coupleDisplayTitle: 'Muhammad Luthfi & Hanum Muftiani',
   eventDate: '2026-09-13',
-  seatCount: 150
+  seatCount: 150,
+  giftAddress: 'Dk. Mambak RT 04 / RW 01, Mambak, Pakis Aji, Jepara, Jawa Tengah',
+  wallets: DEFAULT_WALLETS
 };
 
 const DEFAULT_REWARDS: SouvenirRewardType[] = [
@@ -296,7 +312,14 @@ export const weddingDb = {
     if (!localStorage.getItem(key)) {
       localStorage.setItem(key, JSON.stringify(DEFAULT_SETTINGS));
     }
-    return JSON.parse(localStorage.getItem(key)!) as WeddingSettingsType;
+    const saved = JSON.parse(localStorage.getItem(key)!) as WeddingSettingsType;
+    if (!saved.giftAddress) {
+      saved.giftAddress = DEFAULT_SETTINGS.giftAddress;
+    }
+    if (!saved.wallets) {
+      saved.wallets = DEFAULT_SETTINGS.wallets;
+    }
+    return saved;
   },
 
   saveSettings(settings: WeddingSettingsType, slug: string = 'hanum-luthfi') {

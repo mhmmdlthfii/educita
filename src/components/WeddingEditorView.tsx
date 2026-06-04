@@ -79,6 +79,45 @@ export default function WeddingEditorView() {
     setSettings(nextSettings);
   };
 
+  // Wallet Editor Form State
+  const [newBankName, setNewBankName] = useState<'BCA' | 'BRI' | 'Mandiri' | 'Bank Jateng' | 'Bank Jago' | 'SeaBank' | 'Krom Bank' | 'Gopay' | 'Shopeepay'>('BCA');
+  const [newAccountNumber, setNewAccountNumber] = useState('');
+  const [newAccountHolder, setNewAccountHolder] = useState('');
+
+  const handleAddWallet = () => {
+    if (!settings) return;
+    if (!newAccountNumber || !newAccountHolder) {
+      alert('Semua bidang rekening (nomor & penerima) wajib diisi.');
+      return;
+    }
+    const currentWallets = settings.wallets || [];
+    const newWallet = {
+      id: `w-${Date.now()}`,
+      bankName: newBankName,
+      accountNumber: newAccountNumber.trim(),
+      accountHolder: newAccountHolder.trim()
+    };
+    const nextSettings = {
+      ...settings,
+      wallets: [...currentWallets, newWallet]
+    };
+    setSettings(nextSettings);
+    setNewAccountNumber('');
+    setNewAccountHolder('');
+    showFlash('Rekening / Wallet berhasil ditambahkan kedalam daftar!', 'info');
+  };
+
+  const handleRemoveWallet = (id: string) => {
+    if (!settings) return;
+    const currentWallets = settings.wallets || [];
+    const nextSettings = {
+      ...settings,
+      wallets: currentWallets.filter(w => w.id !== id)
+    };
+    setSettings(nextSettings);
+    showFlash('Rekening / Wallet berhasil dihapus dari daftar.', 'info');
+  };
+
   const updateSectionField = (id: string, key: keyof WeddingSectionType, value: any) => {
     const nextSections = sections.map(sec => sec.id === id ? { ...sec, [key]: value } as WeddingSectionType : sec);
     setSections(nextSections);
@@ -365,6 +404,141 @@ export default function WeddingEditorView() {
                       settings.hasMusicAutoPlay ? 'right-1' : 'left-1'
                     }`}></div>
                   </button>
+                </div>
+
+                {/* Shipping / Gift Address Editor */}
+                <div className="pt-4 border-t border-neutral-800">
+                  <label className="block text-[10px] uppercase font-mono font-bold text-stone-400 tracking-wider mb-1">
+                    Alamat Pengiriman Kado Fisik (Alamat Rumah)
+                  </label>
+                  <textarea
+                    rows={2}
+                    className="w-full bg-neutral-950 border border-neutral-800 focus:border-red-900 text-stone-300 p-3 rounded-xl focus:outline-none transition text-xs font-sans"
+                    value={settings.giftAddress || ''}
+                    onChange={(e) => updateGeneralSetting('giftAddress', e.target.value)}
+                    placeholder="Masukkan alamat lengkap rumah untuk pengiriman kado fisik..."
+                  />
+                  <span className="block text-[9px] text-stone-500 mt-1 uppercase font-mono">
+                    ✓ Alamat ini akan muncul di bawah kartu tanda kasih halaman depan
+                  </span>
+                </div>
+
+                {/* Wallets & Accounts Management Editor */}
+                <div className="pt-4 border-t border-neutral-800 space-y-4">
+                  <div>
+                    <span className="font-extrabold text-[#dfb76c] block text-xs">Manajemen Rekening & E-Wallet</span>
+                    <span className="text-[10px] text-stone-400 block mt-0.5">
+                      Kelola daftar rekening bank atau akun e-wallet Anda. 2 Rekening teratas akan langsung ditampilkan di halaman depan, sisanya dapat dibuka tamu via popup modal.
+                    </span>
+                  </div>
+
+                  {/* Add New Wallet Form */}
+                  <div className="p-4 bg-neutral-950 rounded-xl border border-neutral-850 space-y-3">
+                    <span className="block text-[9.5px] font-black uppercase text-[#dfb76c] tracking-widest font-mono">
+                      + Tambah Bank / Wallet Baru
+                    </span>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      <div>
+                        <label className="block text-[8.5px] uppercase font-mono text-stone-400 font-bold mb-0.5">PILIH BANK/APP</label>
+                        <select
+                          className="w-full bg-neutral-900 border border-neutral-800 text-stone-250 p-2.5 rounded-lg text-xs font-black cursor-pointer"
+                          value={newBankName}
+                          onChange={(e) => setNewBankName(e.target.value as any)}
+                        >
+                          <option value="BCA">BCA</option>
+                          <option value="BRI">BRI</option>
+                          <option value="Mandiri">Mandiri</option>
+                          <option value="Bank Jateng">Bank Jateng</option>
+                          <option value="Bank Jago">Bank Jago</option>
+                          <option value="SeaBank">SeaBank</option>
+                          <option value="Krom Bank">Krom Bank</option>
+                          <option value="Gopay">Gopay</option>
+                          <option value="Shopeepay">Shopeepay</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="block text-[8.5px] uppercase font-mono text-stone-400 font-bold mb-0.5">NOMOR REKENING</label>
+                        <input
+                          type="text"
+                          className="w-full bg-neutral-900 border border-neutral-800 text-white p-2.5 text-xs rounded-lg font-mono font-medium"
+                          placeholder="Nomor rekening / HP..."
+                          value={newAccountNumber}
+                          onChange={(e) => setNewAccountNumber(e.target.value)}
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-[8.5px] uppercase font-mono text-stone-400 font-bold mb-0.5">NAMA PEMILIK</label>
+                        <input
+                          type="text"
+                          className="w-full bg-neutral-900 border border-neutral-800 text-white p-2.5 text-xs rounded-lg font-sans"
+                          placeholder="Atas nama..."
+                          value={newAccountHolder}
+                          onChange={(e) => setNewAccountHolder(e.target.value)}
+                        />
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={handleAddWallet}
+                      className="w-full py-2 bg-red-950 text-[#dfb76c] border border-red-900/30 font-bold text-[10.5px] uppercase tracking-wider rounded-lg cursor-pointer hover:bg-red-900 hover:text-white transition-all text-center"
+                    >
+                      Daftarkan Rekening / Wallet
+                    </button>
+                  </div>
+
+                  {/* Existing Wallets List */}
+                  <div className="space-y-2">
+                    <label className="block text-[10px] uppercase font-mono font-bold text-[#dfb76c] tracking-wider mb-1">
+                      Daftar Rekening Terdaftar ({settings.wallets?.length || 0})
+                    </label>
+
+                    {(settings.wallets || []).length === 0 ? (
+                      <p className="text-[10px] text-stone-500 italic p-3 text-center bg-neutral-950 rounded-xl border border-neutral-850">
+                        Belum ada rekening terdaftar. Silakan tambahkan satu di atas.
+                      </p>
+                    ) : (
+                      <div className="space-y-2 max-h-[220px] overflow-y-auto pr-1">
+                        {(settings.wallets || []).map((w, index) => (
+                          <div
+                            key={w.id}
+                            className="flex justify-between items-center p-3 bg-neutral-950 border border-neutral-850 rounded-xl group/card"
+                          >
+                            <div className="flex items-center gap-2.5 min-w-0">
+                              <span className="text-[9px] font-black text-stone-500 font-mono w-4">
+                                #{index + 1}
+                              </span>
+                              <div className="min-w-0">
+                                <div className="flex items-center gap-1.5 flex-wrap">
+                                  <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-sm bg-neutral-900 text-red-400 border border-neutral-800">
+                                    {w.bankName}
+                                  </span>
+                                  <span className="text-[11px] font-mono text-white font-medium truncate">
+                                    {w.accountNumber}
+                                  </span>
+                                </div>
+                                <p className="text-[10px] text-stone-400 font-sans truncate mt-0.5 font-bold uppercase">
+                                  a.n. {w.accountHolder}
+                                </p>
+                              </div>
+                            </div>
+
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveWallet(w.id)}
+                              className="p-1.5 bg-neutral-900 hover:bg-red-950/40 text-stone-500 hover:text-red-400 rounded-lg border border-neutral-850 hover:border-red-900/30 cursor-pointer transition text-center shrink-0"
+                              title="Hapus Rekening"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             )}
