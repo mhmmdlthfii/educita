@@ -218,15 +218,14 @@ export default function App() {
       {!currentPath.includes('wedding') && (
         <nav className={`sticky top-0 z-30 ${isDarkMode ? 'bg-slate-900/60 border-b border-slate-850 text-white' : 'bg-white/30 border-b border-white/50 text-[#1E293B]'} backdrop-blur-md shadow-xs px-6 sm:px-12 py-5 flex items-center justify-between transition-colors duration-300`}>
         <div className="flex items-center gap-8">
-          {/* Logo brand with geometric nested structure */}
-          <div className="flex items-center gap-3 cursor-pointer" onClick={() => navigateTo('/')}>
-            <div className="w-10 h-10 bg-gradient-to-tr from-emerald-500 to-teal-400 rounded-xl flex items-center justify-center shadow-lg shadow-emerald-200/20 transition duration-350">
-              <div className="w-5 h-5 bg-white rounded-sm rotate-45 flex items-center justify-center text-emerald-600 font-black text-xs">E</div>
-            </div>
-            <div>
-              <span className={`text-xl font-bold tracking-tight ${isDarkMode ? 'text-white' : 'text-slate-900'} leading-none block`}>EDUCITA<span className="text-emerald-500 font-extrabold">.id</span></span>
-              <span className="text-[9px] font-mono text-slate-400 tracking-widest uppercase block leading-none mt-0.5">School Digitalization</span>
-            </div>
+          {/* Logo brand */}
+          <div className="flex items-center cursor-pointer font-bold" onClick={() => navigateTo('/')}>
+            <img 
+              src="https://drive.google.com/thumbnail?id=1Q8HlMp-04atqSQBD64JTBaSnCqGClH2y" 
+              alt="Educita.id Logo" 
+              className="h-10 w-auto object-contain transition duration-350" 
+              referrerPolicy="no-referrer"
+            />
           </div>
 
           {/* Desktop links navigation with Geometric Balance */}
@@ -410,9 +409,13 @@ export default function App() {
             
             {/* Column 1 info */}
             <div className="md:col-span-5 space-y-4">
-              <div className="flex items-center gap-2 text-white font-bold">
-                <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-emerald-600 to-teal-400 flex items-center justify-center text-white text-base font-black">E</div>
-                <span className="text-base tracking-tight font-extrabold">Educita<span className="text-emerald-500">.id</span></span>
+              <div className="flex items-center cursor-pointer text-white font-bold" onClick={() => navigateTo('/')}>
+                <img 
+                  src="https://drive.google.com/thumbnail?id=1Q8HlMp-04atqSQBD64JTBaSnCqGClH2y" 
+                  alt="Educita.id Logo" 
+                  className="h-8 w-auto object-contain" 
+                  referrerPolicy="no-referrer"
+                />
               </div>
               <p className="text-xs text-slate-400 leading-relaxed">
                 Educita adalah digital transformation partner terintegrasi untuk sekolah-sekolah di Indonesia. Menyediakan ekosistem digital hardware & software terlengkap demi kesiapan mutu pendidikan masa kini.
