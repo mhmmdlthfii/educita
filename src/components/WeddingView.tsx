@@ -551,6 +551,7 @@ export default function WeddingView({ toGuest, slug = 'hanum-luthfi' }: WeddingV
 
   if (!isOpen) {
     const guestNameLabel = toGuest || 'Tamu Undangan';
+    const sectionCover = sections.find(s => s.type === 'cover');
 
     if (coverStep === 1) {
       // SCREEN 1: THE PREMIERE COVER VIEW WITH COUNTDOWN
@@ -558,7 +559,10 @@ export default function WeddingView({ toGuest, slug = 'hanum-luthfi' }: WeddingV
         <div className="fixed inset-0 z-50 bg-[#070707] flex flex-col justify-between items-center text-white px-6 overflow-y-auto py-8 select-none">
           {renderYouTubePlayer()}
           {/* Portrait Backdrop Image */}
-          <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&q=80&w=1200')] bg-cover bg-center opacity-30 pointer-events-none z-0"></div>
+          <div 
+            className="absolute inset-0 bg-cover bg-center opacity-30 pointer-events-none z-0"
+            style={{ backgroundImage: `url(${sectionCover?.mediaUrl || 'https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&q=80&w=1200'})` }}
+          ></div>
           <div className="absolute inset-0 bg-gradient-to-t from-[#0A0A0A] via-black/55 to-[#0A0A0A] pointer-events-none z-0"></div>
 
           {/* Top Header Row */}
@@ -569,7 +573,9 @@ export default function WeddingView({ toGuest, slug = 'hanum-luthfi' }: WeddingV
 
           {/* Centered Cover Contents */}
           <div className="flex-1 flex flex-col justify-center items-center py-8 text-center space-y-6 z-10 max-w-xl w-full">
-            <span className="text-[9px] tracking-[0.3em] font-extrabold text-slate-400 uppercase font-mono block">🎬 A DIGITAL AUTEUR PRESENTATION</span>
+            <span className="text-[9px] tracking-[0.3em] font-extrabold text-slate-400 uppercase font-mono block">
+              {sectionCover?.subtitle || '🎬 A DIGITAL AUTEUR PRESENTATION'}
+            </span>
             
             <div className="w-10 h-[1.5px] bg-red-650/80 mx-auto"></div>
 
@@ -578,15 +584,29 @@ export default function WeddingView({ toGuest, slug = 'hanum-luthfi' }: WeddingV
                 The Wedding <span className="text-red-550 font-semibold italic text-xl ml-1">of</span>
               </span>
               <h1 className="font-serif text-3xl sm:text-4xl font-semibold tracking-wide text-white leading-relaxed mt-1">
-                Muhammad Luthfi, S.Pd.
-              </h1>
-              <div className="font-serif text-[#dfb76c] text-xl">&</div>
-              <h1 className="font-serif text-3xl sm:text-4xl font-semibold tracking-wide text-white leading-relaxed">
-                Hanum Muftiani, S.Kom.
+                {sectionCover?.title || settings?.coupleDisplayTitle || 'Hanum & Luthfi'}
               </h1>
             </div>
 
-            <div className="text-[10px] tracking-[0.25em] font-bold text-slate-400 font-mono">07.06.2026</div>
+            {sectionCover?.description && (
+              <p className="text-[11px] text-slate-400 italic max-w-sm mx-auto leading-relaxed whitespace-pre-line bg-black/30 backdrop-blur-xs p-3 rounded-xl border border-white/5">
+                {sectionCover.description}
+              </p>
+            )}
+
+            <div className="text-[10px] tracking-[0.25em] font-bold text-slate-400 font-mono">
+              {settings?.eventDate ? (
+                (() => {
+                  try {
+                    const parts = settings.eventDate.split('-');
+                    if (parts.length === 3) return `${parts[2]}.${parts[1]}.${parts[0]}`;
+                    return settings.eventDate;
+                  } catch (e) {
+                    return '07.06.2026';
+                  }
+                })()
+              ) : '07.06.2026'}
+            </div>
 
             {/* Row of Countdown cards */}
             <div className="flex gap-2.5 justify-center items-center pt-4 select-none">
@@ -956,7 +976,8 @@ export default function WeddingView({ toGuest, slug = 'hanum-luthfi' }: WeddingV
           </div>
         </div>
       )}
-            {/* Decorative background overlays */}
+
+      {/* Decorative background overlays */}
       <div className="absolute top-[800px] left-1/4 w-72 h-72 bg-red-950/20 rounded-full blur-3xl pointer-events-none opacity-20 animate-pulse"></div>
       <div className="absolute top-[1800px] right-1/4 w-80 h-80 bg-[#dfb76c]/5 rounded-full blur-3xl pointer-events-none opacity-20"></div>
 
@@ -966,7 +987,7 @@ export default function WeddingView({ toGuest, slug = 'hanum-luthfi' }: WeddingV
           <section 
             key={sec.id} 
             className="relative w-full min-h-[90vh] flex flex-col justify-between items-center text-center py-16 px-6 bg-cover bg-center text-white overflow-hidden select-none"
-            style={{ backgroundImage: `url(${sec.mediaUrl || 'https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&q=80&w=1200\''})` }}
+            style={{ backgroundImage: `url(${sec.mediaUrl || 'https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&q=80&w=1200'})` }}
           >
             {/* Cinematic Overlay to darken slightly and fade smoothly at the bottom */}
             <div className="absolute inset-0 bg-gradient-to-t from-[#070707] via-black/40 to-black/60 pointer-events-none z-0"></div>
@@ -976,7 +997,7 @@ export default function WeddingView({ toGuest, slug = 'hanum-luthfi' }: WeddingV
 
             <div className="space-y-2 relative z-10">
               <span className="text-[9.5px] tracking-[0.3em] font-extrabold text-neutral-400 uppercase font-mono block">
-                A DIGITAL AUTEUR PRESENTATION
+                {sec.subtitle || 'A DIGITAL AUTEUR PRESENTATION'}
               </span>
               <div className="flex items-center justify-center gap-1.5">
                 <div className="h-[1px] w-6 bg-red-700/80"></div>
@@ -992,21 +1013,17 @@ export default function WeddingView({ toGuest, slug = 'hanum-luthfi' }: WeddingV
               
               <div className="space-y-2">
                 <h1 className="font-serif text-3xl sm:text-5xl font-black tracking-wide text-white leading-tight">
-                  {settings?.coupleDisplayTitle || 'Hanum & Luthfi'}
+                  {sec.title || settings?.coupleDisplayTitle || 'Hanum & Luthfi'}
                 </h1>
                 <p className="text-[10px] sm:text-xs text-stone-300 tracking-wider font-mono uppercase bg-black/40 backdrop-blur-xs py-1.5 px-4 rounded-full inline-block border border-white/5">
-                  Muhammad Luthfi, S.Pd. &amp; Hanum Muftiani, S.Kom.
+                  {sec.title || settings?.coupleDisplayTitle || 'Hanum & Luthfi'}
                 </p>
               </div>
 
               <div className="w-8 h-[1.5px] bg-red-700 mx-auto my-2"></div>
 
-              <p className="text-[9px] text-slate-350 max-w-sm mx-auto leading-relaxed font-mono tracking-widest uppercase bg-black/20 backdrop-blur-xs p-2 rounded-xl">
-                PUTRA DARI BAPAK H. ABDURRAHMAN &amp; IBU HJ. AMINAH
-                <br />
-                <span className="text-red-500 font-bold">&amp;</span>
-                <br />
-                PUTRI PERTAMA DARI BAPAK H. BAMBANG SUSILO &amp; IBU HJ. HARTATI
+              <p className="text-[9.5px] text-slate-350 max-w-md mx-auto leading-relaxed font-mono tracking-wider uppercase bg-black/45 backdrop-blur-xs p-3.5 rounded-2xl border border-white/5 whitespace-pre-wrap">
+                {sec.description || `PUTRA DARI BAPAK H. ABDURRAHMAN & IBU HJ. AMINAH\n&\nPUTRI PERTAMA DARI BAPAK H. BAMBANG SUSILO & IBU HJ. HARTATI`}
               </p>
             </div>
 

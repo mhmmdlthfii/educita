@@ -6,11 +6,97 @@ async function startServer() {
   const app = express();
   const PORT = 3000;
 
-  app.use(express.json());
+  app.use(express.json({ limit: '50mb' }));
+  app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
   // API routes FIRST
   app.get('/api/health', (req, res) => {
     res.json({ status: 'ok', timestamp: new Date().toISOString() });
+  });
+
+  // Serve the uploads directory statically
+  const uploadsDir = path.join(process.cwd(), 'uploads');
+  const fs = await import('fs');
+  if (!fs.existsSync(uploadsDir)) {
+    fs.mkdirSync(uploadsDir, { recursive: true });
+  }
+  app.use('/uploads', express.static(uploadsDir));
+
+  // GET uploaded images list
+  app.get('/api/images', (req, res) => {
+    try {
+      if (!fs.existsSync(uploadsDir)) {
+        fs.mkdirSync(uploadsDir, { recursive: true });
+      }
+      const files = fs.readdirSync(uploadsDir);
+      const images = files
+        .filter(file => {
+          const ext = path.extname(file).toLowerCase();
+          return ['.jpg', '.jpeg', '.png', '.gif', '.webp'].includes(ext);
+        })
+        .map(file => ({
+          name: file,
+          url: `/uploads/${file}`,
+          createdAt: fs.statSync(path.join(uploadsDir, file)).mtime
+        }))
+        .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+      
+      res.json({ images });
+    } catch (err: any) {
+      console.error('Failed to read images list:', err);
+      res.status(500).json({ error: 'Failed to retrieve files: ' + err.message });
+    }
+  });
+
+  // POST upload a new image via Base64
+  app.post('/api/images/upload', (req, res) => {
+    const { name, data } = req.body || {};
+    if (!name || !data) {
+      return res.status(400).json({ error: 'Filename and Base64 data are required' });
+    }
+
+    try {
+      const matches = data.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
+      if (!matches || matches.length !== 3) {
+        return res.status(400).json({ error: 'Invalid Base64 data format' });
+      }
+
+      const buffer = Buffer.from(matches[2], 'base64');
+      if (!fs.existsSync(uploadsDir)) {
+        fs.mkdirSync(uploadsDir, { recursive: true });
+      }
+
+      // Sanitize name and prepend timestamp to prevent collision
+      const safeName = `${Date.now()}_${name.replace(/[^a-zA-Z0-9.\-_]/g, '_')}`;
+      const filePath = path.join(uploadsDir, safeName);
+      
+      fs.writeFileSync(filePath, buffer);
+      res.json({ success: true, url: `/uploads/${safeName}`, name: safeName });
+    } catch (err: any) {
+      console.error('File write error:', err);
+      res.status(500).json({ error: 'Failed to save image to disk: ' + err.message });
+    }
+  });
+
+  // DELETE an uploaded image
+  app.delete('/api/images/:name', (req, res) => {
+    const fileName = req.params.name;
+    if (!fileName || fileName.includes('/') || fileName.includes('..') || fileName.includes('\\')) {
+      return res.status(400).json({ error: 'Invalid filename' });
+    }
+
+    try {
+      const filePath = path.join(uploadsDir, fileName);
+      if (fs.existsSync(filePath)) {
+        fs.unlinkSync(filePath);
+        res.json({ success: true });
+      } else {
+        res.status(404).json({ error: 'Image not found' });
+      }
+    } catch (err: any) {
+      console.error('Failed to delete file:', err);
+      res.status(500).json({ error: 'Failed to delete file: ' + err.message });
+    }
   });
 
   // AI assistant reply endpoint to congratulate guests on behalf of Luthfi and Hanum
