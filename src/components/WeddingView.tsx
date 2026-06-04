@@ -1874,6 +1874,16 @@ export default function WeddingView({ toGuest, slug = 'hanum-luthfi' }: WeddingV
                   </div>
                 </section>
 
+                {/* Cinematic Carousel Guestbook Header */}
+                <div className="text-center mt-14 mb-4 select-none px-4">
+                  <span className="text-[10px] text-[#dfb76c] font-extrabold uppercase tracking-widest block font-mono">
+                    Cinematik Carousel Guestbook
+                  </span>
+                  <h2 className="text-2xl sm:text-3xl font-serif text-white font-black mt-1">
+                    Story Ucapan Interaktif — Kata Mereka
+                  </h2>
+                </div>
+
                 {/* Scrollable round avatars train - directly above preview story and wishes form */}
                 <section className="select-none py-2">
                   <div className="flex gap-4 overflow-x-auto py-3 px-4 justify-start sm:justify-center scrollbar-hide max-w-xl mx-auto pb-4 items-center">
