@@ -662,7 +662,7 @@ export default function AdminWeddingView() {
                 </div>
 
                 <div>
-                  <label className="block text-slate-400 font-bold mb-1">Lagu Pengiring Instrumental Pernikahan (Audio URL)</label>
+                  <label className="block text-slate-400 font-bold mb-1">Lagu Pengiring Instrumental Pernikahan (Audio URL / Link YouTube)</label>
                   <div className="flex gap-2">
                     <div className="w-8 h-8 bg-slate-900 flex items-center justify-center rounded-xl border border-slate-800 text-slate-400">
                       <Volume2 className="w-4 h-4" />
@@ -672,8 +672,10 @@ export default function AdminWeddingView() {
                       className="w-full bg-slate-900 border border-slate-800 px-3 py-2 rounded-xl text-white focus:outline-none focus:border-[#dfb76c] font-mono text-[11px]"
                       value={settings.backgroundMusicUrl}
                       onChange={(e) => setSettings({ ...settings, backgroundMusicUrl: e.target.value })}
+                      placeholder="Masukkan Link Video YouTube atau Link File Audio .mp3"
                     />
                   </div>
+                  <span className="block text-[10px] text-zinc-500 mt-1">✓ Mendukung tautan video YouTube (misalnya https://www.youtube.com/watch?v=...) atau direct link berkas sound .mp3</span>
                 </div>
 
                 <div className="flex items-center gap-2 pt-2">

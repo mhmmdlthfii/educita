@@ -8,21 +8,37 @@ import {
 } from 'lucide-react';
 import { weddingDb, WeddingSectionType, WeddingSettingsType, WeddingGuestbookMessage, WeddingRSVPTicket, SouvenirRewardType } from '../lib/weddingDb';
 
+const avatarAyahanda = new URL('../assets/images/avatar_ayahanda_1780529680659.png', import.meta.url).href;
+const avatarIbunda = new URL('../assets/images/avatar_ibunda_1780529694688.png', import.meta.url).href;
+const avatarKeluarga = new URL('../assets/images/avatar_keluarga_1780529708340.png', import.meta.url).href;
+const avatarSman = new URL('../assets/images/avatar_sman_1780529721100.png', import.meta.url).href;
+const avatarTeman = new URL('../assets/images/avatar_teman_1780529733153.png', import.meta.url).href;
+const avatarVip = new URL('../assets/images/avatar_vip_1780529745684.png', import.meta.url).href;
+const avatarGentleman = new URL('../assets/images/avatar_gentleman_1780529759238.png', import.meta.url).href;
+const avatarLady = new URL('../assets/images/avatar_lady_1780529770987.png', import.meta.url).href;
+
 interface WeddingViewProps {
   toGuest?: string;
   slug?: string;
   key?: any;
 }
 
+const getYouTubeId = (url: string): string | null => {
+  if (!url) return null;
+  const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+  const match = url.match(regExp);
+  return (match && match[2].length === 11) ? match[2] : null;
+};
+
 const PROFILE_TEMPLATES = [
-  { id: 'ayahanda', name: 'Ayahanda', label: 'PRIA BIJAKSANA', char: '👴', color: 'from-stone-800 to-stone-900 border-amber-600/60' },
-  { id: 'ibunda', name: 'Ibunda', label: 'WANITA PENYAYANG', char: '👵', color: 'from-zinc-800 to-stone-950 border-pink-700/60' },
-  { id: 'keluarga', name: 'Keluarga', label: 'PILAR UTAMA', char: '👨‍👩‍👧', color: 'from-zinc-800 to-stone-950 border-blue-600/60' },
-  { id: 'kerabat-sman', name: 'Kerabat SMAN', label: 'TEMAN SEKOLAH', char: '🎓', color: 'from-zinc-800 to-stone-950 border-emerald-600/60' },
-  { id: 'teman-sejawat', name: 'Teman Sejawat', label: 'REKAN KERJA', char: '💼', color: 'from-zinc-800 to-stone-950 border-amber-500/60' },
-  { id: 'vip', name: 'Tamu VIP', label: 'KEHORMATAN VIP', char: '👑', color: 'from-yellow-950/20 to-stone-950 border-amber-400/70' },
-  { id: 'gentleman', name: 'Gentleman', label: 'TAMU PRIA ELEGAN', char: '🤵', color: 'from-slate-900 to-stone-950 border-slate-600/60' },
-  { id: 'lady', name: 'Elegant Lady', label: 'TAMU WANITA ANGGUN', char: '👩‍💼', color: 'from-rose-950/20 to-stone-950 border-rose-600/60' },
+  { id: 'ayahanda', name: 'Ayahanda', label: 'PRIA BIJAKSANA', char: avatarAyahanda, color: 'from-stone-800 to-stone-900 border-neutral-800' },
+  { id: 'ibunda', name: 'Ibunda', label: 'WANITA PENYAYANG', char: avatarIbunda, color: 'from-zinc-800 to-stone-950 border-neutral-800' },
+  { id: 'keluarga', name: 'Keluarga', label: 'PILAR UTAMA', char: avatarKeluarga, color: 'from-zinc-800 to-stone-950 border-neutral-800' },
+  { id: 'kerabat-sman', name: 'Kerabat SMAN', label: 'TEMAN SEKOLAH', char: avatarSman, color: 'from-zinc-800 to-stone-950 border-neutral-800' },
+  { id: 'teman-sejawat', name: 'Teman Sejawat', label: 'REKAN KERJA', char: avatarTeman, color: 'from-zinc-800 to-stone-950 border-neutral-800' },
+  { id: 'vip', name: 'Tamu VIP', label: 'KEHORMATAN VIP', char: avatarVip, color: 'from-yellow-950/20 to-stone-950 border-neutral-800' },
+  { id: 'gentleman', name: 'Gentleman', label: 'TAMU PRIA ELEGAN', char: avatarGentleman, color: 'from-slate-900 to-stone-950 border-neutral-800' },
+  { id: 'lady', name: 'Elegant Lady', label: 'TAMU WANITA ANGGUN', char: avatarLady, color: 'from-rose-950/20 to-stone-950 border-neutral-800' },
 ];
 
 const CINEMATIC_CHAPTERS = [
@@ -72,7 +88,7 @@ const FRIEND_STORIES = [
   {
     name: "Kak",
     fullName: "Kak Farida",
-    avatar: "👩‍🦳",
+    avatar: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&q=80&w=150",
     message: "Barakallah fikum Luthfi dan Hanum, semoga dilancarkan segala urusan akad nikahnya.",
     reply: "Ahad berkah penuh doa. Terima kasih banyak Kak Farida atas restu indahnya bagi kami.",
     rating: "5/5",
@@ -82,7 +98,7 @@ const FRIEND_STORIES = [
   {
     name: "Yuhyi",
     fullName: "Yuhyi Mulia",
-    avatar: "👩‍🎓",
+    avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=150",
     message: "Selamat ya neng Hanum, semoga menjadi keluarga sakinah mawaddah warahmah.",
     reply: "Terima kasih banyak Yuhyi sayang atas kedatangannya serta doanya yang indah.",
     rating: "5/5",
@@ -92,7 +108,7 @@ const FRIEND_STORIES = [
   {
     name: "Diah",
     fullName: "Diah dan Suami",
-    avatar: "💼",
+    avatar: "https://images.unsplash.com/photo-1582213782179-e0d53f98f2ca?auto=format&fit=crop&q=80&w=150",
     message: "Masya Allah selamat menjalankan ibadah terpanjang Tsamarah dan suami, semoga bahagia selalu dunia akhirat❤️",
     reply: "Kepada Diah dan Suami, terima kasih banyak atas doa tulus serta ucapan indahnya untuk kami berdua. Semoga kebahagiaan dan keberkahan yang sama juga senantiasa menyertai kehidupan rumah tangga kalian. — Luthfi & Hanum",
     rating: "5/5",
@@ -102,7 +118,7 @@ const FRIEND_STORIES = [
   {
     name: "Mbak",
     fullName: "Mbak Ningrum",
-    avatar: "👩‍💼",
+    avatar: "https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?auto=format&fit=crop&q=80&w=150",
     message: "Sangat ikut bahagia mendengarnya ffi, selamat menempuh hidup baru ya!",
     reply: "Matur nuwun Mbak Ningrum atas ucapan hangatnya, semoga sehat sekeluarga nggih.",
     rating: "5/5",
@@ -112,7 +128,7 @@ const FRIEND_STORIES = [
   {
     name: "Pricilla",
     fullName: "dr. Pricilla",
-    avatar: "👩‍⚕️",
+    avatar: "https://images.unsplash.com/photo-1628890923662-2cb23c2e0cfe?auto=format&fit=crop&q=80&w=150",
     message: "Selamat menempuh gerbang ibadah mulia! Bahagia terus kalian.",
     reply: "Terima kasih dr. Pricilla, salam hangat dari kami sekeluarga.",
     rating: "5/5",
@@ -132,7 +148,7 @@ export default function WeddingView({ toGuest, slug = 'hanum-luthfi' }: WeddingV
   const [isOpen, setIsOpen] = useState(false);
   const [isMovieLoading, setIsMovieLoading] = useState(false);
   const [movieLoadingStep, setMovieLoadingStep] = useState(0);
-  const [selectedAvatar, setSelectedAvatar] = useState<string>('👴');
+  const [selectedAvatar, setSelectedAvatar] = useState<string>('https://images.unsplash.com/photo-1624561172888-ac93c696e10c?auto=format&fit=crop&q=80&w=150');
   const [customAvatarUrl, setCustomAvatarUrl] = useState<string>('');
   const [isMusicPlaying, setIsMusicPlaying] = useState(false);
   const [videoPlaying, setVideoPlaying] = useState(false);
@@ -237,9 +253,26 @@ export default function WeddingView({ toGuest, slug = 'hanum-luthfi' }: WeddingV
     return () => clearInterval(timer);
   }, [isMovieLoading]);
 
+  // Autoplay slideshow for "Kisah Cinta Kami" (Requirement 5)
+  useEffect(() => {
+    if (videoPlaying) return;
+    
+    const interval = setInterval(() => {
+      setCarouselIdx((prev) => (prev + 1) % CINEMATIC_CHAPTERS.length);
+    }, 4500); // Transitions automatically every 4.5 seconds
+
+    return () => clearInterval(interval);
+  }, [videoPlaying]);
+
   // Audio Autoplay & Lifecycle
   useEffect(() => {
     if (settings?.backgroundMusicUrl && isOpen) {
+      if (getYouTubeId(settings.backgroundMusicUrl)) {
+        if (settings.hasMusicAutoPlay) {
+          setIsMusicPlaying(true);
+        }
+        return;
+      }
       const audio = new Audio(settings.backgroundMusicUrl);
       audio.loop = true;
       audioRef.current = audio;
@@ -304,6 +337,16 @@ export default function WeddingView({ toGuest, slug = 'hanum-luthfi' }: WeddingV
   }, [settings]);
 
   const toggleMusic = () => {
+    const ytId = getYouTubeId(settings?.backgroundMusicUrl || '');
+    if (ytId) {
+      setIsMusicPlaying(!isMusicPlaying);
+      return;
+    }
+    if (!audioRef.current && settings?.backgroundMusicUrl) {
+      const audio = new Audio(settings.backgroundMusicUrl);
+      audio.loop = true;
+      audioRef.current = audio;
+    }
     if (!audioRef.current) return;
     if (isMusicPlaying) {
       audioRef.current.pause();
@@ -387,7 +430,7 @@ export default function WeddingView({ toGuest, slug = 'hanum-luthfi' }: WeddingV
   };
 
   const getAvatarView = (avatarText: string) => {
-    if (avatarText.startsWith('http')) {
+    if (avatarText && (avatarText.startsWith('http') || avatarText.includes('/') || avatarText.startsWith('data:'))) {
       return (
         <img 
           src={avatarText} 
@@ -400,7 +443,23 @@ export default function WeddingView({ toGuest, slug = 'hanum-luthfi' }: WeddingV
         />
       );
     }
-    return <span className="text-xl">{avatarText}</span>;
+    return <span className="text-xl">{avatarText || '👤'}</span>;
+  };
+
+  const renderYouTubePlayer = () => {
+    const ytId = getYouTubeId(settings?.backgroundMusicUrl || '');
+    if (isMusicPlaying && ytId) {
+      return (
+        <iframe
+          src={`https://www.youtube.com/embed/${ytId}?autoplay=1&mute=0&loop=1&playlist=${ytId}&controls=0&disablekb=1&fs=0&modestbranding=1`}
+          allow="autoplay"
+          className="hidden pointer-events-none w-0 h-0 absolute opacity-0"
+          id="youtube-bg-player"
+          title="Background Music Player"
+        />
+      );
+    }
+    return null;
   };
 
   // Fallback loading settings
@@ -477,6 +536,7 @@ export default function WeddingView({ toGuest, slug = 'hanum-luthfi' }: WeddingV
       // SCREEN 1: THE PREMIERE COVER VIEW WITH COUNTDOWN
       return (
         <div className="fixed inset-0 z-50 bg-[#070707] flex flex-col justify-between items-center text-white px-6 overflow-y-auto py-8 select-none">
+          {renderYouTubePlayer()}
           {/* Portrait Backdrop Image */}
           <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&q=80&w=1200')] bg-cover bg-center opacity-30 pointer-events-none z-0"></div>
           <div className="absolute inset-0 bg-gradient-to-t from-[#0A0A0A] via-black/55 to-[#0A0A0A] pointer-events-none z-0"></div>
@@ -523,12 +583,20 @@ export default function WeddingView({ toGuest, slug = 'hanum-luthfi' }: WeddingV
               })}
             </div>
 
+            {/* Custom Hello Guest Message (Requirement 2) */}
+            <div className="pt-2 text-center">
+              <span className="text-[9.5px] tracking-[0.2em] font-mono uppercase text-[#dfb76c] font-black block">Kepada Yth.</span>
+              <h3 className="font-serif text-lg sm:text-xl font-bold tracking-wide mt-1.5 capitalize text-white">
+                hello, <span className="italic font-normal text-[#dfb76c]">{guestNameLabel}</span>
+              </h3>
+            </div>
+
             {/* Sparkle Red Check-In Pill Button */}
             <button 
               id="btn-open-check-in"
               onClick={() => {
                 setCoverStep(2);
-                if (settings?.backgroundMusicUrl && !audioRef.current) {
+                if (settings?.backgroundMusicUrl && !getYouTubeId(settings.backgroundMusicUrl) && !audioRef.current) {
                   const audio = new Audio(settings.backgroundMusicUrl);
                   audio.loop = true;
                   audioRef.current = audio;
@@ -559,7 +627,7 @@ export default function WeddingView({ toGuest, slug = 'hanum-luthfi' }: WeddingV
 
       return (
         <div className="fixed inset-0 z-50 bg-[#070707] flex flex-col justify-between items-center text-white px-6 overflow-y-auto py-8 select-none">
-          
+          {renderYouTubePlayer()}
           {/* Top Header */}
           <div className="w-full flex justify-between items-center z-10 max-w-2xl border-b border-white/5 pb-4">
             <span className="text-[9px] tracking-[0.25em] font-black text-red-550 font-mono uppercase">THE WEDDING PREMIERE</span>
@@ -576,55 +644,67 @@ export default function WeddingView({ toGuest, slug = 'hanum-luthfi' }: WeddingV
             </div>
 
             {/* Slider Row */}
-            <div className="flex items-center justify-center gap-6 my-2 w-full">
+            <div className="flex items-center justify-center gap-1.5 sm:gap-6 my-2 w-full max-w-full overflow-hidden">
               {/* Left arrow */}
               <button 
                 onClick={() => setSelectedProfileIdx(p => (p - 1 + PROFILE_TEMPLATES.length) % PROFILE_TEMPLATES.length)}
-                className="w-10 h-10 rounded-full border border-slate-850 bg-slate-900/40 hover:bg-slate-800 text-slate-400 flex items-center justify-center cursor-pointer active:scale-95 transition shrink-0"
+                className="w-9 h-9 sm:w-10 sm:h-10 rounded-full border border-slate-850 bg-slate-900/40 hover:bg-slate-800 text-slate-400 flex items-center justify-center cursor-pointer active:scale-95 transition shrink-0"
               >
                 <ChevronLeft className="w-5 h-5" />
               </button>
 
               {/* 3 Circular items row representation */}
-              <div className="flex items-center gap-5 justify-center">
-                {/* Previous circle index (Grayscale, hidden on small screens) */}
-                <div className="hidden sm:flex flex-col items-center opacity-15 scale-75 filter grayscale transition-all duration-300">
-                  <div className="w-16 h-16 rounded-full border border-slate-850 bg-slate-950 flex items-center justify-center text-2xl">
-                    {PROFILE_TEMPLATES[prevIdx].char}
+              <div className="flex items-center gap-2 sm:gap-5 justify-center overflow-hidden">
+                {/* Previous circle index */}
+                <div className="flex flex-col items-center opacity-30 scale-75 filter grayscale transition-all duration-300 shrink-0 w-14 sm:w-16">
+                  <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full border border-slate-850 bg-slate-950 flex items-center justify-center overflow-hidden">
+                    {PROFILE_TEMPLATES[prevIdx].char ? (
+                      <img src={PROFILE_TEMPLATES[prevIdx].char} alt="" className="w-full h-full object-cover" />
+                    ) : (
+                      <span className="text-xl">👤</span>
+                    )}
                   </div>
-                  <span className="text-[9px] text-slate-500 font-mono mt-1.5 font-bold">{PROFILE_TEMPLATES[prevIdx].name}</span>
+                  <span className="text-[9px] text-slate-500 font-mono mt-1.5 font-bold truncate max-w-full">{PROFILE_TEMPLATES[prevIdx].name}</span>
                 </div>
 
                 {/* Central active glowing profile circle */}
-                <div className="flex flex-col items-center scale-110 duration-300 select-none">
+                <div className="flex flex-col items-center scale-105 sm:scale-110 duration-300 select-none shrink-0 border-none bg-transparent">
                   <div className="relative">
                     {/* Glowing outer backdrop */}
-                    <div className="absolute -inset-2.5 bg-gradient-to-tr from-red-650 via-[#dfb76c]/40 to-red-650 rounded-full blur-md opacity-75 animate-pulse"></div>
+                    <div className="absolute -inset-2 bg-gradient-to-tr from-red-650 via-[#dfb76c] to-red-650 rounded-full blur-md opacity-65 animate-pulse"></div>
                     
-                    <div className={`relative w-24 h-24 rounded-full border-2 bg-gradient-to-b ${activeProfiler.color} flex items-center justify-center text-4xl shadow-2xl`}>
-                      {activeProfiler.char}
+                    <div className={`relative w-24 h-24 sm:w-28 sm:h-28 rounded-full border-3 border-[#dfb76c] bg-neutral-950 flex items-center justify-center overflow-hidden shadow-2xl`}>
+                      {activeProfiler.char ? (
+                        <img src={activeProfiler.char} alt="" className="w-full h-full object-cover animate-duration-1000" />
+                      ) : (
+                        <span className="text-3xl">👤</span>
+                      )}
                     </div>
                     
                     {/* Gold sparkle mini badge */}
-                    <div className="absolute -top-1 -right-1 bg-red-650 p-1 rounded-full text-white shadow-md border border-red-500">
+                    <div className="absolute -top-0.5 -right-0.5 bg-red-650 p-1.5 rounded-full text-white shadow-md border border-red-500">
                       <Sparkles className="w-3.5 h-3.5 text-[#dfb76c] fill-[#dfb76c]/20" />
                     </div>
                   </div>
                 </div>
 
-                {/* Next circle index (Grayscale, hidden on small screens) */}
-                <div className="hidden sm:flex flex-col items-center opacity-15 scale-75 filter grayscale transition-all duration-300">
-                  <div className="w-16 h-16 rounded-full border border-slate-850 bg-slate-950 flex items-center justify-center text-2xl">
-                    {PROFILE_TEMPLATES[nextIdx].char}
+                {/* Next circle index */}
+                <div className="flex flex-col items-center opacity-30 scale-75 filter grayscale transition-all duration-300 shrink-0 w-14 sm:w-16">
+                  <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full border border-slate-855 bg-slate-950 flex items-center justify-center overflow-hidden">
+                    {PROFILE_TEMPLATES[nextIdx].char ? (
+                      <img src={PROFILE_TEMPLATES[nextIdx].char} alt="" className="w-full h-full object-cover" />
+                    ) : (
+                      <span className="text-xl">👤</span>
+                    )}
                   </div>
-                  <span className="text-[9px] text-slate-500 font-mono mt-1.5 font-bold">{PROFILE_TEMPLATES[nextIdx].name}</span>
+                  <span className="text-[9px] text-slate-500 font-mono mt-1.5 font-bold truncate max-w-full">{PROFILE_TEMPLATES[nextIdx].name}</span>
                 </div>
               </div>
 
               {/* Right arrow */}
               <button 
                 onClick={() => setSelectedProfileIdx(p => (p + 1) % PROFILE_TEMPLATES.length)}
-                className="w-10 h-10 rounded-full border border-slate-850 bg-slate-900/40 hover:bg-slate-800 text-slate-400 flex items-center justify-center cursor-pointer active:scale-95 transition shrink-0"
+                className="w-9 h-9 sm:w-10 sm:h-10 rounded-full border border-slate-850 bg-slate-900/40 hover:bg-slate-800 text-slate-400 flex items-center justify-center cursor-pointer active:scale-95 transition shrink-0"
               >
                 <ChevronRight className="w-5 h-5" />
               </button>
@@ -657,6 +737,20 @@ export default function WeddingView({ toGuest, slug = 'hanum-luthfi' }: WeddingV
                   setSelectedProfileName(activeProfiler.name);
                   setCustomAvatarUrl('');
                   setIsMovieLoading(true);
+                  // Play background sound immediately on click activation to bypass browser autoplay blocks
+                  const isYt = getYouTubeId(settings?.backgroundMusicUrl || '');
+                  if (!isYt && settings?.backgroundMusicUrl) {
+                    if (!audioRef.current) {
+                      const audio = new Audio(settings.backgroundMusicUrl);
+                      audio.loop = true;
+                      audioRef.current = audio;
+                    }
+                    audioRef.current.play().then(() => {
+                      setIsMusicPlaying(true);
+                    }).catch(e => console.log("Audio play blocked/failed:", e));
+                  } else if (isYt) {
+                    setIsMusicPlaying(true);
+                  }
                 }}
                 className="w-full max-w-[220px] py-3.5 px-6 rounded-full bg-red-650 hover:bg-red-750 select-none cursor-pointer flex items-center justify-center gap-2 text-white font-extrabold uppercase tracking-widest text-[11px] shadow-lg border border-red-700/40 active:scale-95 transition-all duration-200"
               >
@@ -688,6 +782,7 @@ export default function WeddingView({ toGuest, slug = 'hanum-luthfi' }: WeddingV
   // ==========================================
   return (
     <div className="relative min-h-screen pb-32 bg-[#070707] text-[#eeeff2] font-sans">
+      {renderYouTubePlayer()}
 
       {/* Floating Buttons: Mail and Vinyl, at bottom right */}
       <div className="fixed bottom-24 right-5 sm:right-8 z-40 flex flex-col items-center gap-3">
@@ -739,7 +834,7 @@ export default function WeddingView({ toGuest, slug = 'hanum-luthfi' }: WeddingV
       </div>
 
       {/* Sticky Header Top Bar of The Premiere */}
-      <div className="sticky top-0 bg-[#070707]/90 backdrop-blur-md z-40 border-b border-white/5 py-4 px-6 flex justify-between items-center w-full max-w-3xl mx-auto">
+      <div className="sticky top-0 bg-[#070707]/65 backdrop-blur-md z-40 border-b border-white/5 py-4 px-6 flex justify-between items-center w-full max-w-3xl mx-auto">
         <span className="font-serif tracking-widest text-[#dfb76c] italic font-semibold text-lg select-none">The Premiere</span>
         <div className="flex items-center gap-3">
           <button className="p-2 rounded-full bg-neutral-900 border border-neutral-800 text-[#dfb76c] hover:bg-neutral-800 transition">
@@ -757,7 +852,7 @@ export default function WeddingView({ toGuest, slug = 'hanum-luthfi' }: WeddingV
             <Gift className="w-4 h-4" />
           </button>
           <div className="w-8 h-8 rounded-full border border-neutral-800 overflow-hidden bg-slate-950 flex items-center justify-center text-sm">
-            {selectedAvatar}
+            {getAvatarView(selectedAvatar)}
           </div>
         </div>
       </div>
@@ -775,8 +870,8 @@ export default function WeddingView({ toGuest, slug = 'hanum-luthfi' }: WeddingV
 
             {/* Friend Details Header */}
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-full border-2 border-[#821E1E]/40 bg-neutral-950 flex items-center justify-center text-2xl shadow-md select-none">
-                {selectedReview.avatar}
+              <div className="w-12 h-12 rounded-full border-2 border-[#821E1E]/40 bg-neutral-950 flex items-center justify-center text-2xl shadow-md overflow-hidden select-none">
+                {getAvatarView(selectedAvatar)}
               </div>
               <div>
                 <h4 className="font-bold text-white text-sm">{selectedReview.fullName}</h4>
@@ -842,123 +937,122 @@ export default function WeddingView({ toGuest, slug = 'hanum-luthfi' }: WeddingV
           </div>
         </div>
       )}
-
-      {/* Decorative background overlays */}
+            {/* Decorative background overlays */}
       <div className="absolute top-[800px] left-1/4 w-72 h-72 bg-red-950/20 rounded-full blur-3xl pointer-events-none opacity-20 animate-pulse"></div>
       <div className="absolute top-[1800px] right-1/4 w-80 h-80 bg-[#dfb76c]/5 rounded-full blur-3xl pointer-events-none opacity-20"></div>
+
+      {/* 2.A SECTION TYPE: COVER BANNER (FULL VIEWPORT WIDTH & PHOTO BACKDROP WITH GRADIENT - REQ 4) */}
+      {sections.filter(s => s.isEnabled && s.type === 'cover').map((sec) => {
+        return (
+          <section 
+            key={sec.id} 
+            className="relative w-full min-h-[90vh] flex flex-col justify-between items-center text-center py-16 px-6 bg-cover bg-center text-white overflow-hidden select-none"
+            style={{ backgroundImage: `url(${sec.mediaUrl || 'https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&q=80&w=1200\''})` }}
+          >
+            {/* Cinematic Overlay to darken slightly and fade smoothly at the bottom */}
+            <div className="absolute inset-0 bg-gradient-to-t from-[#070707] via-black/40 to-black/60 pointer-events-none z-0"></div>
+            
+            {/* Direct thick gradient fade from background color #070707 on bottom to make transparency transition */}
+            <div className="absolute bottom-0 inset-x-0 h-48 bg-gradient-to-t from-[#070707] via-[#070707]/75 to-transparent pointer-events-none z-0"></div>
+
+            <div className="space-y-2 relative z-10">
+              <span className="text-[9.5px] tracking-[0.3em] font-extrabold text-neutral-400 uppercase font-mono block">
+                A DIGITAL AUTEUR PRESENTATION
+              </span>
+              <div className="flex items-center justify-center gap-1.5">
+                <div className="h-[1px] w-6 bg-red-700/80"></div>
+                <Heart className="w-3.5 h-3.5 text-red-650 fill-red-650 animate-pulse" />
+                <div className="h-[1px] w-6 bg-red-700/80"></div>
+              </div>
+            </div>
+
+            <div className="space-y-4 max-w-xl mx-auto relative z-10 select-none py-12">
+              <span className="text-[10px] tracking-[0.25em] font-extrabold text-[#dfb76c] uppercase font-mono block">
+                THE WEDDING OF
+              </span>
+              
+              <div className="space-y-2">
+                <h1 className="font-serif text-3xl sm:text-5xl font-black tracking-wide text-white leading-tight">
+                  {settings?.coupleDisplayTitle || 'Hanum & Luthfi'}
+                </h1>
+                <p className="text-[10px] sm:text-xs text-stone-300 tracking-wider font-mono uppercase bg-black/40 backdrop-blur-xs py-1.5 px-4 rounded-full inline-block border border-white/5">
+                  Muhammad Luthfi, S.Pd. &amp; Hanum Muftiani, S.Kom.
+                </p>
+              </div>
+
+              <div className="w-8 h-[1.5px] bg-red-700 mx-auto my-2"></div>
+
+              <p className="text-[9px] text-slate-350 max-w-sm mx-auto leading-relaxed font-mono tracking-widest uppercase bg-black/20 backdrop-blur-xs p-2 rounded-xl">
+                PUTRA DARI BAPAK H. ABDURRAHMAN &amp; IBU HJ. AMINAH
+                <br />
+                <span className="text-red-500 font-bold">&amp;</span>
+                <br />
+                PUTRI PERTAMA DARI BAPAK H. BAMBANG SUSILO &amp; IBU HJ. HARTATI
+              </p>
+            </div>
+
+            {/* Float Seat Admission and Countdown inside cover */}
+            <div className="w-full max-w-md mx-auto space-y-4 relative z-10">
+              <div className="p-4 bg-black/50 backdrop-blur-md rounded-2xl border border-white/5 shadow-2xl text-left font-mono relative overflow-hidden">
+                <div className="absolute right-4 bottom-4 text-5xl opacity-5 pointer-events-none">
+                  {selectedAvatar.startsWith('http') ? (
+                    <img src={selectedAvatar} alt="" className="w-12 h-12 object-cover rounded-full opacity-10" />
+                  ) : (
+                    selectedAvatar
+                  )}
+                </div>
+                <div className="flex items-center justify-between gap-4">
+                  <div className="space-y-1">
+                    <span className="text-[7px] text-red-500 font-extrabold tracking-[0.2em] block uppercase font-mono">CINEMA GATEKEEPER PASS</span>
+                    <h4 className="text-xs font-bold font-sans text-white flex items-center gap-1.5 pt-0.5">
+                      <div className="w-5 h-5 rounded-full overflow-hidden shrink-0 bg-neutral-900 border border-white/10">
+                        {getAvatarView(selectedAvatar)}
+                      </div>
+                      <span>{toGuest ? toGuest : 'Tamu Undangan'}</span>
+                    </h4>
+                    <span className="text-[7.5px] text-stone-450 block tracking-wider pt-0.5">Hadir Sebagai: <strong className="text-stone-300 font-bold">{selectedProfileName}</strong></span>
+                  </div>
+                  
+                  <div className="text-right shrink-0">
+                    <span className="text-[7px] text-stone-500 block uppercase tracking-widest font-bold">VIP SEAT PASS</span>
+                    <span className="text-10px text-[#dfb76c] font-black">{myTicket ? myTicket.seatNumber : 'VIP-A11'}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Event Countdown Timers block inside cover banner bottom */}
+              <div className="grid grid-cols-4 gap-2.5 max-w-sm mx-auto font-mono text-[#dfb76c] font-bold bg-[#030303]/60 backdrop-blur-md border border-white/5 p-3 rounded-2xl shadow-xl">
+                <div className="bg-black/60 border border-neutral-900/60 rounded-xl p-2 flex flex-col justify-center items-center">
+                  <span className="text-lg font-black text-white">{timeLeft.days}</span>
+                  <span className="text-[7px] text-stone-500 font-bold uppercase tracking-wider mt-1">HARI</span>
+                </div>
+                <div className="bg-black/60 border border-neutral-900/60 rounded-xl p-2 flex flex-col justify-center items-center">
+                  <span className="text-lg font-black text-white">{timeLeft.hours}</span>
+                  <span className="text-[7px] text-stone-500 font-bold uppercase tracking-wider mt-1">JAM</span>
+                </div>
+                <div className="bg-black/60 border border-neutral-900/60 rounded-xl p-2 flex flex-col justify-center items-center">
+                  <span className="text-lg font-black text-white">{timeLeft.minutes}</span>
+                  <span className="text-[7px] text-stone-500 font-bold uppercase tracking-wider mt-1">MENIT</span>
+                </div>
+                <div className="bg-[#821E1E]/50 border border-red-950 rounded-xl p-2 flex flex-col justify-center items-center animate-pulse">
+                  <span className="text-lg font-black text-white">{timeLeft.seconds}</span>
+                  <span className="text-[7px] text-red-450 font-bold uppercase tracking-wider mt-1">DETIK</span>
+                </div>
+              </div>
+            </div>
+          </section>
+        );
+      })}
 
       {/* Content wrapper */}
       <div id="premiere-content" className="max-w-3xl mx-auto px-4 md:px-0 pt-6 space-y-20 relative">
         
         {/* Render each dynamic section in order */}
-        {sections.filter(s => s.isEnabled).map((sec) => {
-          
-          // ==========================================
-          // 2.A SECTION TYPE: COVER BANNER
-          // ==========================================
-          if (sec.type === 'cover') {
-            return (
-              <section key={sec.id} className="relative w-full rounded-[36px] overflow-hidden text-center space-y-6 pt-4 border border-white/5 bg-neutral-950/40 shadow-2xl py-8">
-                <div className="space-y-2">
-                  <span className="text-[9px] tracking-[0.3em] font-extrabold text-neutral-400 uppercase font-mono block">
-                    A DIGITAL AUTEUR PRESENTATION
-                  </span>
-                  <div className="flex items-center justify-center gap-1">
-                    <div className="h-[1px] w-6 bg-red-700"></div>
-                    <Heart className="w-3.5 h-3.5 text-red-650 fill-red-650" />
-                    <div className="h-[1px] w-6 bg-red-700"></div>
-                  </div>
-                </div>
-
-                {/* Main Film Poster Portrait Frame */}
-                <div className="relative w-full max-w-sm mx-auto aspect-[3/4] rounded-3xl overflow-hidden border border-neutral-800 shadow-[0_15px_35px_rgba(0,0,0,0.8)]">
-                  <img 
-                    src="https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&q=80&w=800"
-                    alt="Theatrical Cover Prewedding" 
-                    className="w-full h-full object-cover opacity-80"
-                    referrerPolicy="no-referrer"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-[#0A0A0A] via-black/30 to-[#0A0A0A]/40"></div>
-
-                  <div className="absolute inset-x-4 bottom-8 space-y-3">
-                    <span className="text-[9px] tracking-[0.25em] font-extrabold text-neutral-400 uppercase font-mono block">
-                      THE WEDDING OF
-                    </span>
-                    
-                    <div className="space-y-1">
-                      <h2 className="font-serif text-2xl sm:text-3xl font-bold tracking-wide text-white leading-tight">
-                        {settings?.coupleDisplayTitle || 'Hanum & Luthfi'}
-                      </h2>
-                      <p className="text-[9.5px] text-stone-300 tracking-wider">
-                        Muhammad Luthfi, S.Pd. &amp; Hanum Muftiani, S.Kom.
-                      </p>
-                    </div>
-
-                    <div className="w-8 h-[1px] bg-red-700 mx-auto my-1"></div>
-
-                    <p className="text-[8px] text-slate-400 max-w-xs mx-auto leading-relaxed font-mono">
-                      PUTRA DARI BAPAK H. ABDURRAHMAN &amp; IBU HJ. AMINAH
-                      <br />
-                      &amp;
-                      <br />
-                      PUTRI PERTAMA DARI BAPAK H. BAMBANG SUSILO &amp; IBU HJ. HARTATI
-                    </p>
-                  </div>
-
-                  {/* Floating track label */}
-                  <div className="absolute right-4 top-4 bg-black/60 backdrop-blur-md border border-neutral-800 px-3 py-1 rounded-full text-[7.5px] text-stone-400 font-mono tracking-widest flex items-center gap-1.5">
-                    <span className="w-1.5 h-1.5 bg-red-650 rounded-full animate-ping"></span>
-                    <span>♫ Kisah Abadi</span>
-                  </div>
-                </div>
-
-                <div className="max-w-md mx-auto p-4 bg-gradient-to-tr from-neutral-900 to-neutral-950/40 rounded-2xl border border-[#dfb76c]/10 shadow-md text-left font-mono relative overflow-hidden select-none">
-                  <div className="absolute right-4 bottom-4 text-5xl opacity-5 pointer-events-none">{selectedAvatar}</div>
-                  
-                  <div className="flex items-center justify-between gap-4">
-                    <div className="space-y-1">
-                      <span className="text-[7px] text-red-500 font-extrabold tracking-[0.2em] block uppercase font-mono">CINEMA GATEKEEPER PASS</span>
-                      <h4 className="text-xs font-bold font-sans text-white flex items-center gap-1.5 pt-0.5">
-                        <span className="text-sm">{selectedAvatar}</span>
-                        <span>{toGuest ? toGuest : 'Tamu Undangan'}</span>
-                      </h4>
-                      <span className="text-[7.5px] text-stone-400 block tracking-wider pt-0.5">Hadir Sebagai: <strong className="text-stone-200 font-bold">{selectedProfileName}</strong></span>
-                    </div>
-                    
-                    <div className="text-right shrink-0">
-                      <span className="text-[7px] text-stone-500 block uppercase tracking-widest font-bold">VIP SEAT PASS</span>
-                      <span className="text-10px text-[#dfb76c] font-black">{myTicket ? myTicket.seatNumber : 'VIP-A11'}</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Event Countdown Timers block */}
-                <div className="grid grid-cols-4 gap-2.5 max-w-sm mx-auto font-mono text-[#dfb76c] font-bold bg-[#0f0f0f] border border-white/5 p-3.5 rounded-2xl shadow-xl">
-                  <div className="bg-neutral-950 border border-neutral-900 rounded-xl p-2.5 flex flex-col justify-center items-center">
-                    <span className="text-xl font-black text-white">{timeLeft.days}</span>
-                    <span className="text-[7px] text-stone-500 font-bold uppercase tracking-wider mt-1">HARI</span>
-                  </div>
-                  <div className="bg-neutral-950 border border-neutral-900 rounded-xl p-2.5 flex flex-col justify-center items-center">
-                    <span className="text-xl font-black text-white">{timeLeft.hours}</span>
-                    <span className="text-[7px] text-stone-500 font-bold uppercase tracking-wider mt-1">JAM</span>
-                  </div>
-                  <div className="bg-neutral-950 border border-neutral-900 rounded-xl p-2.5 flex flex-col justify-center items-center">
-                    <span className="text-xl font-black text-white">{timeLeft.minutes}</span>
-                    <span className="text-[7px] text-stone-500 font-bold uppercase tracking-wider mt-1">MENIT</span>
-                  </div>
-                  <div className="bg-neutral-950 border border-neutral-900 rounded-xl p-2.5 flex flex-col justify-center items-center">
-                    <span className="text-xl font-black text-white">{timeLeft.seconds}</span>
-                    <span className="text-[7px] text-stone-500 font-bold uppercase tracking-wider mt-1">DETIK</span>
-                  </div>
-                </div>
-              </section>
-            );
-          }
-
+        {sections.filter(s => s.isEnabled && s.type !== 'cover').map((sec) => {
           if (sec.type === 'movie_poster') {
             return (
               <section key={sec.id} className="space-y-6">
-                <div className="flex items-end justify-between border-b border-white/5 pb-2">
+                <div className="flex items-end justify-between pb-2">
                   <div>
                     <span className="text-[10px] text-stone-500 font-bold uppercase tracking-wider block font-mono">NOW SHOWING</span>
                     <h3 className="text-2xl font-serif text-white font-black mt-1">Kisah Cinta Kami</h3>
@@ -969,7 +1063,7 @@ export default function WeddingView({ toGuest, slug = 'hanum-luthfi' }: WeddingV
                         setCarouselIdx(p => (p - 1 + CINEMATIC_CHAPTERS.length) % CINEMATIC_CHAPTERS.length);
                         setVideoPlaying(false);
                       }}
-                      className="w-10 h-10 rounded-full bg-neutral-900 border border-neutral-800 flex items-center justify-center hover:bg-neutral-850 active:scale-95 transition text-stone-400 hover:text-white"
+                      className="w-10 h-10 rounded-full bg-neutral-900 shadow-md flex items-center justify-center hover:bg-neutral-850 active:scale-95 transition text-stone-400 hover:text-white"
                     >
                       <ChevronLeft className="w-5 h-5" />
                     </button>
@@ -978,7 +1072,7 @@ export default function WeddingView({ toGuest, slug = 'hanum-luthfi' }: WeddingV
                         setCarouselIdx(p => (p + 1) % CINEMATIC_CHAPTERS.length);
                         setVideoPlaying(false);
                       }}
-                      className="w-10 h-10 rounded-full bg-neutral-900 border border-neutral-800 flex items-center justify-center hover:bg-neutral-850 active:scale-95 transition text-stone-400 hover:text-white"
+                      className="w-10 h-10 rounded-full bg-neutral-900 shadow-md flex items-center justify-center hover:bg-neutral-850 active:scale-95 transition text-stone-400 hover:text-white"
                     >
                       <ChevronRight className="w-5 h-5" />
                     </button>
@@ -993,10 +1087,10 @@ export default function WeddingView({ toGuest, slug = 'hanum-luthfi' }: WeddingV
                       const isActive = idx === carouselIdx;
                       
                       if (Math.abs(offset) > 2) return null;
-
+ 
                       let styleClass = "";
                       if (isActive) {
-                        styleClass = "scale-100 z-30 opacity-100 translate-x-0 pointer-events-auto border-2 border-[#dfb76c] shadow-[0_0_35px_rgba(130,30,30,0.6)]";
+                        styleClass = "scale-100 z-30 opacity-100 translate-x-0 pointer-events-auto shadow-[0_0_45px_rgba(130,30,30,0.85)]";
                       } else if (offset === -1) {
                         styleClass = "scale-80 z-20 opacity-50 -translate-x-[110px] sm:-translate-x-[150px] pointer-events-none";
                       } else if (offset === 1) {
@@ -1006,7 +1100,7 @@ export default function WeddingView({ toGuest, slug = 'hanum-luthfi' }: WeddingV
                       } else if (offset === 2) {
                         styleClass = "scale-65 z-10 opacity-20 translate-x-[170px] sm:translate-x-[230px] pointer-events-none";
                       }
-
+ 
                       return (
                         <div
                           key={chap.title}
@@ -1017,24 +1111,24 @@ export default function WeddingView({ toGuest, slug = 'hanum-luthfi' }: WeddingV
                             <img src={chap.image} alt={chap.title} className="w-full h-full object-cover opacity-75" referrerPolicy="no-referrer" />
                             <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent"></div>
                           </div>
-
+ 
                           {/* Header badge inside card */}
-                          <div className="z-10 bg-black/60 backdrop-blur-xs px-2.5 py-1 rounded-full border border-white/5 w-fit text-[7.5px] tracking-wider uppercase font-mono font-black text-[#dfb76c]">
+                          <div className="z-10 bg-black/60 backdrop-blur-xs px-2.5 py-1 rounded-full w-fit text-[7.5px] tracking-wider uppercase font-mono font-black text-[#dfb76c] shadow-sm">
                             {chap.subtitle}
                           </div>
-
+ 
                           {/* Center Play button */}
                           {isActive && (
                             <div className="z-10 absolute inset-0 flex items-center justify-center">
                               <button 
                                 onClick={() => setVideoPlaying(!videoPlaying)}
-                                className="w-14 h-14 rounded-full bg-[#821E1E]/95 border-2 border-[#dfb76c]/40 text-white flex items-center justify-center shadow-lg hover:scale-110 active:scale-95 transition cursor-pointer"
+                                className="w-14 h-14 rounded-full bg-[#821E1E]/95 text-white flex items-center justify-center shadow-2xl hover:scale-110 active:scale-95 transition cursor-pointer"
                               >
                                 {videoPlaying ? <Pause className="w-5 h-5 fill-white" /> : <Play className="w-5 h-5 fill-white pl-0.5" />}
                               </button>
                             </div>
                           )}
-
+ 
                           {/* Bottom metadata */}
                           <div className="z-10 space-y-1">
                             <h4 className="text-white text-xs sm:text-sm font-black tracking-wide leading-tight">{chap.title}</h4>
@@ -1044,7 +1138,7 @@ export default function WeddingView({ toGuest, slug = 'hanum-luthfi' }: WeddingV
                       );
                     })}
                   </div>
-
+ 
                   {/* Dot sliders */}
                   <div className="flex gap-2 justify-center py-2">
                     {CINEMATIC_CHAPTERS.map((_, dotIdx) => (
@@ -1061,15 +1155,15 @@ export default function WeddingView({ toGuest, slug = 'hanum-luthfi' }: WeddingV
                     ))}
                   </div>
                 </div>
-
+ 
                 {/* Simulated inline Video Playback */}
                 {videoPlaying && (
-                  <div className="p-4 bg-neutral-950 rounded-2xl border border-neutral-800 text-center animate-[fadeIn_0.3s_ease-out] space-y-2 max-w-xl mx-auto">
+                  <div className="p-4 bg-neutral-900/40 backdrop-blur-md rounded-2xl text-center shadow-[0_25px_60px_rgba(0,0,0,0.85)] animate-[fadeIn_0.3s_ease-out] space-y-2 max-w-xl mx-auto">
                     <video 
                       src={CINEMATIC_CHAPTERS[carouselIdx].videoUrl} 
                       controls 
                       autoPlay
-                      className="w-full h-auto max-h-72 rounded-xl border border-neutral-800 bg-black"
+                      className="w-full h-auto max-h-72 rounded-xl bg-black shadow-inner"
                     />
                     <p className="text-[10px] text-[#dfb76c] font-mono uppercase tracking-widest mt-1">
                       NOW PLAYING: CHAPTER {carouselIdx + 1} - "{CINEMATIC_CHAPTERS[carouselIdx].quote}"
@@ -1078,7 +1172,7 @@ export default function WeddingView({ toGuest, slug = 'hanum-luthfi' }: WeddingV
                 )}
 
                 {/* Classic Quote Frame (Image 2) */}
-                <div className="max-w-xl mx-auto p-6 rounded-3xl border border-neutral-800 bg-neutral-950/40 backdrop-blur-xs text-center space-y-4">
+                <div className="max-w-xl mx-auto p-6 rounded-3xl bg-neutral-950/60 shadow-[0_20px_50px_rgba(0,0,0,0.6)] backdrop-blur-xs text-center space-y-4">
                   <p className="text-xs sm:text-sm italic font-serif leading-relaxed text-stone-200">
                     "Dan di antara tanda-tanda (kebesaran)-Nya ialah Dia menciptakan pasangan-pasangan untukmu dari jenismu sendiri, agar kamu cenderung dan merasa tenteram kepadanya, dan Dia menjadikan di antaramu rasa kasih dan sayang."
                   </p>
@@ -1104,11 +1198,11 @@ export default function WeddingView({ toGuest, slug = 'hanum-luthfi' }: WeddingV
                   <h2 className="text-2xl font-serif text-white font-black mt-1">Mempelai Wanita</h2>
                 </div>
 
-                <div className="bg-neutral-950 p-6 sm:p-8 rounded-[32px] border border-neutral-800 max-w-xl mx-auto flex flex-col sm:flex-row items-center gap-6 text-center sm:text-left shadow-2xl relative overflow-hidden">
+                <div className="bg-neutral-950 p-6 sm:p-8 rounded-[32px] max-w-xl mx-auto flex flex-col sm:flex-row items-center gap-6 text-center sm:text-left shadow-[0_25px_55px_rgba(0,0,0,0.7)] relative overflow-hidden">
                   <div className="absolute right-4 top-4 text-[#dfb76c]/5 font-serif text-8xl font-black pointer-events-none select-none">H</div>
                   
                   {/* Photo crop */}
-                  <div className="w-32 h-32 rounded-full overflow-hidden shrink-0 border-2 border-[#dfb76c]/40 shadow-xl bg-neutral-900">
+                  <div className="w-32 h-32 rounded-full overflow-hidden shrink-0 shadow-xl bg-neutral-900">
                     <img 
                       src={sec.mediaUrl || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=250"} 
                       alt="The Bride Siti Hanum Handayani" 
@@ -1119,7 +1213,7 @@ export default function WeddingView({ toGuest, slug = 'hanum-luthfi' }: WeddingV
 
                   {/* text */}
                   <div className="space-y-3 relative z-10">
-                    <span className="inline-block text-[9px] bg-red-950/60 text-[#dfb76c] border border-red-900/60 px-3 py-1 rounded-full font-extrabold uppercase tracking-widest font-mono">
+                    <span className="inline-block text-[9px] bg-red-950/60 text-[#dfb76c] px-3 py-1 rounded-full font-extrabold uppercase tracking-widest font-mono">
                       {sec.subtitle || 'Siti Hanum Handayani, S.Kom.'}
                     </span>
                     <h3 className="text-xl font-serif font-black text-white">
@@ -1145,11 +1239,11 @@ export default function WeddingView({ toGuest, slug = 'hanum-luthfi' }: WeddingV
                   <h2 className="text-2xl font-serif text-white font-black mt-1">Mempelai Pria</h2>
                 </div>
 
-                <div className="bg-neutral-950 p-6 sm:p-8 rounded-[32px] border border-neutral-800 max-w-xl mx-auto flex flex-col sm:flex-row items-center gap-6 text-center sm:text-left shadow-2xl relative overflow-hidden">
+                <div className="bg-neutral-950 p-6 sm:p-8 rounded-[32px] max-w-xl mx-auto flex flex-col sm:flex-row items-center gap-6 text-center sm:text-left shadow-[0_25px_55px_rgba(0,0,0,0.7)] relative overflow-hidden">
                   <div className="absolute right-4 top-4 text-red-800/10 font-serif text-8xl font-black pointer-events-none select-none">L</div>
                   
                   {/* Photo crop */}
-                  <div className="w-32 h-32 rounded-full overflow-hidden shrink-0 border-2 border-red-800/40 shadow-xl bg-neutral-900">
+                  <div className="w-32 h-32 rounded-full overflow-hidden shrink-0 shadow-xl bg-neutral-900">
                     <img 
                       src={sec.mediaUrl || "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&q=80&w=250"} 
                       alt="The Groom Muhammad Luthfi" 
@@ -1160,7 +1254,7 @@ export default function WeddingView({ toGuest, slug = 'hanum-luthfi' }: WeddingV
 
                   {/* text */}
                   <div className="space-y-3 relative z-10">
-                    <span className="inline-block text-[9px] bg-red-950/60 text-[#dfb76c] border border-red-900/60 px-3 py-1 rounded-full font-extrabold uppercase tracking-widest font-mono">
+                    <span className="inline-block text-[9px] bg-red-950/60 text-[#dfb76c] px-3 py-1 rounded-full font-extrabold uppercase tracking-widest font-mono">
                       {sec.subtitle || 'Muhammad Luthfi, S.Pd.'}
                     </span>
                     <h3 className="text-xl font-serif font-black text-white">
@@ -1190,8 +1284,8 @@ export default function WeddingView({ toGuest, slug = 'hanum-luthfi' }: WeddingV
                   </p>
                 </div>
 
-                <div className="p-6 sm:p-8 bg-white/55 border border-white/60 rounded-[32px] shadow-xs hover:shadow-sm transition max-w-xl mx-auto">
-                  <p className="text-xs text-slate-500 leading-relaxed italic text-center">
+                <div className="p-6 sm:p-8 bg-neutral-950/60 rounded-[32px] shadow-[0_20px_50px_rgba(0,0,0,0.6)] transition max-w-xl mx-auto">
+                  <p className="text-xs text-stone-200 leading-relaxed italic text-center">
                     "{sec.description}"
                   </p>
                 </div>
@@ -1229,7 +1323,7 @@ export default function WeddingView({ toGuest, slug = 'hanum-luthfi' }: WeddingV
                     <div 
                       key={index} 
                       onClick={() => setLightboxImage(img)}
-                      className="aspect-square rounded-2xl overflow-hidden hover:scale-102 hover:shadow-lg transition-all duration-300 cursor-pointer border border-[#dfb76c]/10"
+                      className="aspect-square rounded-2xl overflow-hidden hover:scale-102 hover:shadow-lg transition-all duration-300 cursor-pointer shadow-md bg-neutral-900"
                     >
                       <img 
                         src={img} 
@@ -1246,14 +1340,14 @@ export default function WeddingView({ toGuest, slug = 'hanum-luthfi' }: WeddingV
                   <div className="fixed inset-0 z-50 bg-slate-950/95 backdrop-blur-sm flex items-center justify-center p-4">
                     <button 
                       onClick={() => setLightboxImage(null)}
-                      className="absolute top-5 right-5 w-10 h-10 rounded-full bg-slate-900 border border-slate-800 text-white flex items-center justify-center shadow hover:bg-slate-800 cursor-pointer"
+                      className="absolute top-5 right-5 w-10 h-10 rounded-full bg-slate-900 text-white flex items-center justify-center shadow hover:bg-slate-800 cursor-pointer"
                     >
                       ✕
                     </button>
                     <img 
                       src={lightboxImage} 
                       alt="Lightbox visual prewedding" 
-                      className="max-w-full max-h-[85vh] object-contain rounded-2xl border border-slate-800 shadow-2xl"
+                      className="max-w-full max-h-[85vh] object-contain rounded-2xl shadow-2xl"
                     />
                   </div>
                 )}
@@ -1274,8 +1368,8 @@ export default function WeddingView({ toGuest, slug = 'hanum-luthfi' }: WeddingV
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                   {/* Item 1: Akad */}
-                  <div className="bg-neutral-950 p-6 rounded-[28px] border border-neutral-800 relative text-center space-y-4 shadow-xl">
-                    <div className="w-12 h-12 rounded-full bg-[#821E1E]/20 text-[#dfb76c] flex items-center justify-center border border-red-800/40 mx-auto">
+                  <div className="bg-neutral-950 p-6 rounded-[28px] relative text-center space-y-4 shadow-[0_20px_50px_rgba(0,0,0,0.65)]">
+                    <div className="w-12 h-12 rounded-full bg-[#821E1E]/20 text-[#dfb76c] flex items-center justify-center mx-auto shadow-md">
                       <Users className="w-5 h-5" />
                     </div>
                     <div className="space-y-1">
@@ -1300,8 +1394,8 @@ export default function WeddingView({ toGuest, slug = 'hanum-luthfi' }: WeddingV
                   </div>
 
                   {/* Item 2: Resepsi */}
-                  <div className="bg-neutral-950 p-6 rounded-[28px] border border-neutral-800 relative text-center space-y-4 shadow-xl">
-                    <div className="w-12 h-12 rounded-full bg-red-950/40 text-[#dfb76c] flex items-center justify-center border border-red-900/60 mx-auto">
+                  <div className="bg-neutral-950 p-6 rounded-[28px] relative text-center space-y-4 shadow-[0_20px_50px_rgba(0,0,0,0.65)]">
+                    <div className="w-12 h-12 rounded-full bg-red-950/40 text-[#dfb76c] flex items-center justify-center mx-auto shadow-md">
                       <Users2 className="w-5 h-5" />
                     </div>
                     <div className="space-y-1">
@@ -1327,8 +1421,8 @@ export default function WeddingView({ toGuest, slug = 'hanum-luthfi' }: WeddingV
                 </div>
 
                 {/* Real-time Address Peta layout */}
-                <div className="bg-neutral-950 rounded-[28px] overflow-hidden border border-neutral-800 shadow-xl">
-                  <div className="bg-neutral-900 px-4 py-3.5 flex items-center justify-between text-xs font-bold border-b border-white/5 font-mono">
+                <div className="bg-neutral-950 rounded-[28px] overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.65)]">
+                  <div className="bg-neutral-900 px-4 py-3.5 flex items-center justify-between text-xs font-bold font-mono">
                     <span className="flex items-center gap-1.5 text-[#dfb76c]">
                       <Map className="w-4 h-4 text-[#dfb76c]" />
                       <span>LIVE DIRECTIONS MAP</span>
@@ -1349,15 +1443,15 @@ export default function WeddingView({ toGuest, slug = 'hanum-luthfi' }: WeddingV
                       className="absolute inset-0 w-full h-full object-cover opacity-10"
                       referrerPolicy="no-referrer"
                     />
-                    <div className="p-4 bg-neutral-950/95 border border-neutral-800 rounded-2xl max-w-sm text-center relative z-10 space-y-2.5">
-                      <span className="text-[8px] bg-red-950 text-[#dfb76c] px-2.5 py-0.5 rounded border border-red-900 font-bold uppercase tracking-widest font-mono">MAP POINT VENUE</span>
+                    <div className="p-4 bg-neutral-950/95 rounded-2xl max-w-sm text-center relative z-10 space-y-2.5 shadow-xl">
+                      <span className="text-[8px] bg-red-950 text-[#dfb76c] px-2.5 py-0.5 rounded font-bold uppercase tracking-widest font-mono shadow-sm">MAP POINT VENUE</span>
                       <h4 className="text-xs font-bold text-white">Gedung Bale Pertiwi Indah, Bandung</h4>
                       <p className="text-[10px] text-stone-300 leading-relaxed">Raya Cipaganti, Bandung, Jawa Barat (lokasi strategis dekat pusat kota).</p>
                       
-                      <div className="flex items-center justify-center gap-1.5 pt-1.5 border-t border-white/5 font-mono">
+                      <div className="flex items-center justify-center gap-1.5 pt-1.5 font-mono">
                         <button 
                           onClick={() => handleCopy('-6.8912, 107.6045', 'gps')}
-                          className="px-3 py-1 bg-neutral-900 border border-neutral-800 text-[9.5px] font-bold text-stone-300 rounded-md hover:bg-neutral-800"
+                          className="px-3 py-1 bg-neutral-900 text-[9.5px] font-bold text-stone-300 rounded-md hover:bg-neutral-850 shadow-md"
                         >
                           {copiedAccount === 'gps' ? 'Tersalin' : 'Copy GPS Koordinat'}
                         </button>
@@ -1367,7 +1461,7 @@ export default function WeddingView({ toGuest, slug = 'hanum-luthfi' }: WeddingV
                 </div>
 
                 {/* AI ROUTE ASSISTANT (CO-PILOT CONCIERGE) */}
-                <div className="bg-neutral-950 rounded-[28px] p-5 border border-neutral-800 space-y-4 text-xs shadow-xl">
+                <div className="bg-neutral-950 rounded-[28px] p-5 space-y-4 text-xs shadow-[0_20px_50px_rgba(0,0,0,0.65)]">
                   <div className="flex items-center gap-1.5">
                     <Compass className="w-5 h-5 text-red-500 animate-pulse" />
                     <span className="text-[9px] font-black uppercase tracking-widest font-mono text-stone-400">🧭 CO-PILOT ASISTEN RUTE CERDAS (AI COMPASS)</span>
@@ -1581,8 +1675,7 @@ export default function WeddingView({ toGuest, slug = 'hanum-luthfi' }: WeddingV
 
           // ==========================================
           // 2.I SECTION TYPE: DIGITAL SOUVENIR GACHA
-          // ==========================================
-          if (sec.type === 'gift') {
+               if (sec.type === 'gift') {
             return (
               <section key={sec.id} className="space-y-6">
                 <div className="text-center">
@@ -1592,7 +1685,7 @@ export default function WeddingView({ toGuest, slug = 'hanum-luthfi' }: WeddingV
                   </h2>
                 </div>
 
-                <div className="bg-neutral-950 p-6 sm:p-8 rounded-[32px] border border-neutral-800 max-w-xl mx-auto shadow-2xl text-center space-y-6 relative overflow-hidden">
+                <div className="bg-neutral-950 p-6 sm:p-8 rounded-[32px] max-w-xl mx-auto shadow-[0_25px_60px_rgba(0,0,0,0.7)] text-center space-y-6 relative overflow-hidden">
                   {/* Glowing background highlights in Gacha box */}
                   <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 bg-[#dfb76c]/5 rounded-full blur-2xl pointer-events-none"></div>
 
@@ -1602,7 +1695,7 @@ export default function WeddingView({ toGuest, slug = 'hanum-luthfi' }: WeddingV
 
                   <div className="relative max-w-xs mx-auto">
                     {/* Spinning wheel / Box animation graphics */}
-                    <div className="w-36 h-36 mx-auto bg-black border-4 border-[#dfb76c] rounded-full flex items-center justify-center relative shadow-inner overflow-hidden">
+                    <div className="w-36 h-36 mx-auto bg-black rounded-full flex items-center justify-center relative shadow-inner overflow-hidden">
                       
                       {isSpinning ? (
                         <div className="absolute inset-0 border-4 border-dashed border-red-500 rounded-full animate-spin"></div>
@@ -1619,7 +1712,7 @@ export default function WeddingView({ toGuest, slug = 'hanum-luthfi' }: WeddingV
                           <span className="text-3xl">🎉</span>
                         ) : (
                           <div className="space-y-1">
-                            <Gift className="w-8 h-8 text-[#dfb76c] mx-auto animate-bounce" />
+                            <Gift className="w-8 h-8 text-[#dfb76c] mx-auto animate-bounce animate-duration-1000" />
                             <span className="text-[8px] font-mono text-stone-500 font-bold uppercase block tracking-widest">TAP SPIN BUTTON</span>
                           </div>
                         )}
@@ -1629,12 +1722,12 @@ export default function WeddingView({ toGuest, slug = 'hanum-luthfi' }: WeddingV
 
                   {/* Draw button or Reward Card results */}
                   {gachaReward ? (
-                    <div className="p-5 border border-red-900/40 rounded-2xl bg-neutral-900 shadow-2xl max-w-sm mx-auto space-y-3 animate-[fadeIn_0.3s_ease-out]">
+                    <div className="p-5 rounded-2xl bg-neutral-900 shadow-[0_15px_35px_rgba(0,0,0,0.5)] max-w-sm mx-auto space-y-3 animate-[fadeIn_0.3s_ease-out]">
                       <span className="text-[9px] bg-red-950 text-red-400 font-extrabold uppercase px-2.5 py-0.5 rounded-full font-mono tracking-widest">
                         MY EXCLUSIVE PRIZE DRAWN
                       </span>
                       
-                      <div className="aspect-video w-full rounded-xl overflow-hidden border border-neutral-800 bg-black shadow-inner">
+                      <div className="aspect-video w-full rounded-xl overflow-hidden bg-black shadow-inner">
                         <img 
                           src={gachaReward.imageUrl} 
                           alt="Gacha prize rewards background" 
@@ -1655,7 +1748,7 @@ export default function WeddingView({ toGuest, slug = 'hanum-luthfi' }: WeddingV
                       <button 
                         onClick={spinGacha}
                         disabled={isSpinning}
-                        className="px-8 py-3 rounded-full bg-neutral-900 hover:bg-neutral-850 border border-neutral-800 text-[#dfb76c] font-black tracking-widest uppercase text-[10px] cursor-pointer shadow-md transform hover:scale-[1.03] transition-all disabled:opacity-40"
+                        className="px-8 py-3 rounded-full bg-neutral-900 hover:bg-neutral-850 text-[#dfb76c] font-black tracking-widest uppercase text-[10px] cursor-pointer shadow-md transform hover:scale-[1.03] transition-all disabled:opacity-40"
                       >
                         {isSpinning ? 'MEMUTAR REEL SOUVENIR...' : 'ROLL SOUVENIR TICKET'}
                       </button>
@@ -1666,13 +1759,13 @@ export default function WeddingView({ toGuest, slug = 'hanum-luthfi' }: WeddingV
                   )}
 
                   {/* Reward List and probabilistic details */}
-                  <div className="border-t border-white/5 pt-5 text-left max-w-md mx-auto">
+                  <div className="pt-5 text-left max-w-md mx-auto">
                     <span className="text-[9px] text-[#dfb76c] font-bold uppercase tracking-widest font-mono">
                       📋 TINGKAT AKURASI & STOCK HADIAH SOUVENIR:
                     </span>
-                    <div className="mt-2.5 space-y-2 text-[10px] text-stone-400 font-mono">
+                    <div className="mt-2.5 space-y-2 text-[10px] text-stone-450 font-mono">
                       {rewardsList.map(r => (
-                        <div key={r.id} className="flex justify-between items-center text-xs pb-1.5 border-b border-dashed border-white/5">
+                        <div key={r.id} className="flex justify-between items-center text-xs pb-1.5">
                           <span className="font-bold text-stone-200">{r.title}</span>
                           <div className="flex items-center gap-2">
                             <span className="bg-neutral-900 text-stone-500 font-bold px-1.5 py-0.5 rounded text-[10px]">Prob: {r.probability}%</span>
@@ -1708,32 +1801,32 @@ export default function WeddingView({ toGuest, slug = 'hanum-luthfi' }: WeddingV
                     </h2>
                   </div>
 
-                  <div className="bg-neutral-950 p-6 sm:p-8 rounded-[32px] border border-neutral-800 text-stone-200 max-w-xl mx-auto shadow-2xl space-y-6">
+                  <div className="bg-neutral-950 p-6 sm:p-8 rounded-[32px] text-stone-200 max-w-xl mx-auto shadow-[0_25px_60px_rgba(0,0,0,0.7)] space-y-6">
                     <p className="text-xs text-stone-400 leading-relaxed text-center font-sans">
                       Demi keselarasan visual dokumentasi pada penayangan perdana istimewa Hanum & Luthfi, para tamu undangan kehormatan disarankan mengenakan pakaian dengan nuansa palet warna berikut:
                     </p>
 
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                      <div className="p-3 bg-neutral-900 border border-neutral-850 rounded-2xl text-center space-y-2 flex flex-col items-center shadow-md">
-                        <div className="w-10 h-10 rounded-full bg-[#FAECE1] shadow-inner border border-neutral-800"></div>
+                      <div className="p-3 bg-neutral-900 rounded-2xl text-center space-y-2 flex flex-col items-center shadow-md">
+                        <div className="w-10 h-10 rounded-full bg-[#FAECE1] shadow-inner"></div>
                         <span className="font-extrabold text-xs text-white">Warm Cream</span>
                         <span className="text-[8px] text-[#dfb76c] font-mono block uppercase font-bold">Keluarga</span>
                       </div>
 
-                      <div className="p-3 bg-neutral-900 border border-neutral-850 rounded-2xl text-center space-y-2 flex flex-col items-center shadow-md">
-                        <div className="w-10 h-10 rounded-full bg-[#A2B8AA] shadow-inner border border-neutral-800"></div>
+                      <div className="p-3 bg-neutral-900 rounded-2xl text-center space-y-2 flex flex-col items-center shadow-md">
+                        <div className="w-10 h-10 rounded-full bg-[#A2B8AA] shadow-inner"></div>
                         <span className="font-extrabold text-xs text-white">Sage Green</span>
                         <span className="text-[8px] text-[#dfb76c] font-mono block uppercase font-bold">Kerabat</span>
                       </div>
 
-                      <div className="p-3 bg-neutral-900 border border-neutral-850 rounded-2xl text-center space-y-2 flex flex-col items-center shadow-md">
-                        <div className="w-10 h-10 rounded-full bg-[#AA8060] shadow-inner border border-neutral-800"></div>
+                      <div className="p-3 bg-neutral-900 rounded-2xl text-center space-y-2 flex flex-col items-center shadow-md">
+                        <div className="w-10 h-10 rounded-full bg-[#AA8060] shadow-inner"></div>
                         <span className="font-extrabold text-xs text-white">Warm Brown</span>
                         <span className="text-[8px] text-[#dfb76c] font-mono block uppercase font-bold">Teman Kerja</span>
                       </div>
 
-                      <div className="p-3 bg-neutral-900 border border-neutral-850 rounded-2xl text-center space-y-2 flex flex-col items-center shadow-md">
-                        <div className="w-10 h-10 rounded-full bg-[#821E1E] shadow-inner border border-neutral-800"></div>
+                      <div className="p-3 bg-neutral-900 rounded-2xl text-center space-y-2 flex flex-col items-center shadow-md">
+                        <div className="w-10 h-10 rounded-full bg-[#821E1E] shadow-inner"></div>
                         <span className="font-extrabold text-xs text-white">Deep Maroon</span>
                         <span className="text-[8px] text-[#dfb76c] font-mono block uppercase font-bold">Tamu VIP</span>
                       </div>
@@ -1749,7 +1842,7 @@ export default function WeddingView({ toGuest, slug = 'hanum-luthfi' }: WeddingV
                   </div>
                   
                   {/* Scrollable round avatars train */}
-                  <div className="flex gap-4 overflow-x-auto py-4 px-2 justify-start sm:justify-center scrollbar-hide max-w-xl mx-auto border-b border-white/5 pb-6">
+                  <div className="flex gap-4 overflow-x-auto py-4 px-2 justify-start sm:justify-center scrollbar-hide max-w-xl mx-auto pb-6">
                     {/* Access to globally populated friend reviews */}
                     {FRIEND_STORIES.map((story, idx) => (
                       <button 
@@ -1757,9 +1850,9 @@ export default function WeddingView({ toGuest, slug = 'hanum-luthfi' }: WeddingV
                         onClick={() => setSelectedReview(story)}
                         className="flex flex-col items-center gap-2 shrink-0 group focus:outline-none cursor-pointer"
                       >
-                        <div className="w-14 h-14 rounded-full p-0.5 bg-gradient-to-tr from-[#dfb76c] via-red-500 to-amber-700 group-hover:scale-[1.05] transition-all">
-                          <div className="w-full h-full rounded-full border border-black overflow-hidden bg-neutral-900 flex items-center justify-center text-lg">
-                            {getAvatarView(story.avatar)}
+                        <div className="w-14 h-14 rounded-full p-0.5 bg-gradient-to-tr from-[#dfb76c] via-red-500 to-amber-700 group-hover:scale-[1.05] transition-all shadow-md">
+                          <div className="w-full h-full rounded-full overflow-hidden bg-neutral-900 flex items-center justify-center text-lg">
+                            {getAvatarView(selectedAvatar)}
                           </div>
                         </div>
                         <div className="text-center">
@@ -1808,7 +1901,7 @@ export default function WeddingView({ toGuest, slug = 'hanum-luthfi' }: WeddingV
                           <div className="flex items-center justify-between z-10 mt-3 bg-neutral-950 p-2 rounded-xl border border-neutral-800">
                             <div className="flex items-center gap-2 text-xs">
                               <div className="w-8 h-8 rounded-full border border-red-900/60 overflow-hidden flex items-center justify-center bg-black shrink-0 select-none">
-                                {getAvatarView(currentStory.avatar)}
+                                {getAvatarView(selectedAvatar)}
                               </div>
                               <div>
                                 <div className="font-black text-white truncate max-w-[130px] leading-none">
@@ -1972,8 +2065,8 @@ export default function WeddingView({ toGuest, slug = 'hanum-luthfi' }: WeddingV
         })}
 
         {/* Floating Wedding Cashless gift button at page bottom */}
-        <div id="tanda-kasih-digital" className="border-t border-neutral-800 pt-10 text-center space-y-4">
-          <div className="w-10 h-10 bg-red-950/40 text-[#dfb76c] border border-red-900/40 rounded-full flex items-center justify-center mx-auto mb-1">
+        <div id="tanda-kasih-digital" className="pt-10 text-center space-y-4">
+          <div className="w-10 h-10 bg-red-950/40 text-[#dfb76c] rounded-full flex items-center justify-center mx-auto mb-1">
             <Gift className="w-5 h-5 text-[#dfb76c]" />
           </div>
           <h3 className="wedding-font-serif text-xl font-bold text-white">Tanda Kasih Digital</h3>
@@ -1983,15 +2076,15 @@ export default function WeddingView({ toGuest, slug = 'hanum-luthfi' }: WeddingV
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 max-w-lg mx-auto text-left text-xs font-mono">
             {/* Bank Mandiri styled as an elegant Black Credit Card */}
-            <div className="p-5 bg-gradient-to-br from-[#070707] via-neutral-900 to-neutral-950 border border-neutral-800 rounded-2xl relative shadow-2xl overflow-hidden min-h-[170px] flex flex-col justify-between">
+            <div className="p-5 bg-gradient-to-br from-[#070707] via-neutral-900 to-neutral-950 rounded-2xl relative shadow-[0_20px_50px_rgba(0,0,0,0.65)] overflow-hidden min-h-[170px] flex flex-col justify-between">
               <div className="absolute top-0 right-0 w-24 h-24 bg-[#dfb76c]/5 rounded-full blur-xl pointer-events-none"></div>
               
               <div className="flex justify-between items-start">
                 <div>
-                  <span className="text-[8px] bg-red-950 text-[#dfb76c] border border-red-900/40 px-2 py-0.5 rounded font-bold uppercase block w-fit">BANK MANDIRI</span>
+                  <span className="text-[8px] bg-red-950 text-[#dfb76c] px-2 py-0.5 rounded font-bold uppercase block w-fit">BANK MANDIRI</span>
                   {/* Microchip ornament */}
-                  <div className="w-8 h-6 bg-gradient-to-tr from-[#dfb76c]/40 to-yellow-500/10 rounded-sm border border-[#dfb76c]/20 mt-3 relative">
-                    <div className="absolute inset-1 border-r border-b border-[#dfb76c]/20"></div>
+                  <div className="w-8 h-6 bg-gradient-to-tr from-[#dfb76c]/40 to-yellow-500/10 rounded-sm mt-3 relative">
+                    <div className="absolute inset-1 opacity-20"></div>
                   </div>
                 </div>
                 {/* Mastercard-like circle design badge */}
@@ -2013,7 +2106,7 @@ export default function WeddingView({ toGuest, slug = 'hanum-luthfi' }: WeddingV
                 </div>
                 <button 
                   onClick={() => handleCopy('1230004567890', 'mandiri')}
-                  className="px-2.5 py-1 bg-neutral-900 hover:bg-neutral-850 border border-neutral-800 text-[#dfb76c] rounded-md font-bold text-[9px] uppercase cursor-pointer"
+                  className="px-2.5 py-1 bg-neutral-900 hover:bg-neutral-850 text-[#dfb76c] rounded-md font-bold text-[9px] uppercase cursor-pointer"
                 >
                   {copiedAccount === 'mandiri' ? 'Copied' : 'Copy'}
                 </button>
@@ -2021,15 +2114,15 @@ export default function WeddingView({ toGuest, slug = 'hanum-luthfi' }: WeddingV
             </div>
 
             {/* Bank BCA styled as an elegant Black Premium Credit Card */}
-            <div className="p-5 bg-gradient-to-br from-[#0c0d12] via-neutral-900 to-neutral-950 border border-neutral-800 rounded-2xl relative shadow-xl overflow-hidden min-h-[170px] flex flex-col justify-between">
+            <div className="p-5 bg-gradient-to-br from-[#0c0d12] via-neutral-900 to-neutral-950 rounded-2xl relative shadow-[0_20px_50px_rgba(0,0,0,0.65)] overflow-hidden min-h-[170px] flex flex-col justify-between">
               <div className="absolute top-0 right-0 w-24 h-24 bg-red-500/5 rounded-full blur-xl pointer-events-none"></div>
               
               <div className="flex justify-between items-start">
                 <div>
-                  <span className="text-[8px] bg-red-950 text-red-400 border border-[#dfb76c]/20 px-2 py-0.5 rounded font-bold uppercase block w-fit">BANK BCA</span>
+                  <span className="text-[8px] bg-red-950 text-red-400 px-2 py-0.5 rounded font-bold uppercase block w-fit">BANK BCA</span>
                   {/* Microchip ornament */}
-                  <div className="w-8 h-6 bg-gradient-to-tr from-[#dfb76c]/40 to-yellow-500/10 rounded-sm border border-[#dfb76c]/20 mt-3 relative">
-                    <div className="absolute inset-1 border-r border-[#dfb76c]/20"></div>
+                  <div className="w-8 h-6 bg-gradient-to-tr from-[#dfb76c]/40 to-yellow-500/10 rounded-sm mt-3 relative">
+                    <div className="absolute inset-1 opacity-20"></div>
                   </div>
                 </div>
                 <div className="flex -space-x-2 opacity-60">
@@ -2050,7 +2143,7 @@ export default function WeddingView({ toGuest, slug = 'hanum-luthfi' }: WeddingV
                 </div>
                 <button 
                   onClick={() => handleCopy('8600123456', 'bca')}
-                  className="px-2.5 py-1 bg-neutral-900 hover:bg-neutral-850 border border-neutral-800 text-[#dfb76c] rounded-md font-bold text-[9px] uppercase cursor-pointer"
+                  className="px-2.5 py-1 bg-neutral-900 hover:bg-neutral-850 text-[#dfb76c] rounded-md font-bold text-[9px] uppercase cursor-pointer"
                 >
                   {copiedAccount === 'bca' ? 'Copied' : 'Copy'}
                 </button>

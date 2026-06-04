@@ -345,9 +345,9 @@ export default function WeddingEditorView() {
                     className="w-full bg-neutral-950 border border-neutral-800 text-stone-300 font-mono p-3 rounded-xl focus:outline-none focus:border-red-900 font-medium text-[11px]"
                     value={settings.backgroundMusicUrl}
                     onChange={(e) => updateGeneralSetting('backgroundMusicUrl', e.target.value)}
-                    placeholder="Atau masukkan URL MP3 background music berlisensi di sini"
+                    placeholder="Atau masukkan Link YouTube / URL MP3 background music"
                   />
-                  <span className="block text-[9px] text-stone-500 mt-1 uppercase font-mono">✓ Harap gunakan URL sound/track audio berakhiran ekstensi .mp3</span>
+                  <span className="block text-[9px] text-stone-500 mt-1 uppercase font-mono">✓ Mendukung link video YouTube atau link langsung file audio .mp3</span>
                 </div>
 
                 <div className="flex items-center justify-between p-3.5 bg-neutral-950 rounded-xl border border-neutral-850">
