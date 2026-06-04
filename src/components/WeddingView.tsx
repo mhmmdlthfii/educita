@@ -213,38 +213,48 @@ export default function WeddingView({ toGuest, slug = 'hanum-luthfi' }: WeddingV
 
   // Load configuration
   useEffect(() => {
-    const loadedSections = weddingDb.getSections(slug);
-    const loadedSettings = weddingDb.getSettings(slug);
-    const loadedBook = weddingDb.getGuestbook(slug);
-    const loadedRewards = weddingDb.getRewards(slug);
-
-    setSections(loadedSections.sort((a, b) => a.order - b.order));
-    setSettings(loadedSettings);
-    setGuestBook(loadedBook);
-    setRewardsList(loadedRewards);
-
-    // Look for previous ticket booking if already rsvp
-    const allTickets = weddingDb.getTickets(slug);
-    const selfName = toGuest || 'Tamu Undangan';
-    const found = allTickets.find(t => t.guestName.toLowerCase().trim() === selfName.toLowerCase().trim());
-    if (found) {
-      setMyTicket(found);
-      setRsvpSent(true);
-      if (found.avatar) {
-        setSelectedAvatar(found.avatar);
+    const syncDataAndLoad = async () => {
+      try {
+        await weddingDb.initialize(slug);
+      } catch (err) {
+        console.warn('Sync failed:', err);
       }
-    }
+      
+      const loadedSections = weddingDb.getSections(slug);
+      const loadedSettings = weddingDb.getSettings(slug);
+      const loadedBook = weddingDb.getGuestbook(slug);
+      const loadedRewards = weddingDb.getRewards(slug);
 
-    // Look for drawn rewards
-    const drawHistory = weddingDb.getDrawHistory(slug);
-    const drawn = drawHistory.find(h => h.guestName.toLowerCase().trim() === selfName.toLowerCase().trim());
-    if (drawn) {
-      const rewDetail = loadedRewards.find(r => r.title === drawn.rewardTitle);
-      if (rewDetail) {
-        setGachaReward(rewDetail);
-        setHasDrawn(true);
+      setSections(loadedSections.sort((a, b) => a.order - b.order));
+      setSettings(loadedSettings);
+      setGuestBook(loadedBook);
+      setRewardsList(loadedRewards);
+
+      // Look for previous ticket booking if already rsvp
+      const allTickets = weddingDb.getTickets(slug);
+      const selfName = toGuest || 'Tamu Undangan';
+      const found = allTickets.find(t => t.guestName.toLowerCase().trim() === selfName.toLowerCase().trim());
+      if (found) {
+        setMyTicket(found);
+        setRsvpSent(true);
+        if (found.avatar) {
+          setSelectedAvatar(found.avatar);
+        }
       }
-    }
+
+      // Look for drawn rewards
+      const drawHistory = weddingDb.getDrawHistory(slug);
+      const drawn = drawHistory.find(h => h.guestName.toLowerCase().trim() === selfName.toLowerCase().trim());
+      if (drawn) {
+        const rewDetail = loadedRewards.find(r => r.title === drawn.rewardTitle);
+        if (rewDetail) {
+          setGachaReward(rewDetail);
+          setHasDrawn(true);
+        }
+      }
+    };
+
+    syncDataAndLoad();
   }, [slug, toGuest]);
 
   // Progressive Cinema Film Loading Effect
@@ -403,13 +413,14 @@ export default function WeddingView({ toGuest, slug = 'hanum-luthfi' }: WeddingV
   };
 
   // Draw Gacha Souvenir
-  const spinGacha = () => {
+  const spinGacha = async () => {
     if (isSpinning || hasDrawn) return;
     setIsSpinning(true);
     
+    const drawnReward = await weddingDb.drawSouvenirReward(toGuest || 'Tamu Undangan', slug);
+    
     // Simulate spin wheels
     setTimeout(() => {
-      const drawnReward = weddingDb.drawSouvenirReward(toGuest || 'Tamu Undangan', slug);
       setGachaReward(drawnReward);
       setIsSpinning(false);
       setHasDrawn(true);

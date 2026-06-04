@@ -292,8 +292,30 @@ const DEFAULT_TICKETS: WeddingRSVPTicket[] = [
   }
 ];
 
-// LOCALPERSISTENCE LOGIC
+// LOCALPERSISTENCE & REMOTE HARMONIZED STORAGE ENGINE (V1 FULL STACK)
 export const weddingDb = {
+  // Sync state from server to local storage cache
+  async initialize(slug: string = 'hanum-luthfi'): Promise<void> {
+    try {
+      const response = await fetch('/api/wedding-state');
+      if (response.ok) {
+        const state = await response.json();
+        
+        // Populate cache keys
+        if (state.sections) localStorage.setItem(`wedding_sections_${slug}`, JSON.stringify(state.sections));
+        if (state.settings) localStorage.setItem(`wedding_settings_${slug}`, JSON.stringify(state.settings));
+        if (state.rewards) localStorage.setItem(`wedding_rewards_${slug}`, JSON.stringify(state.rewards));
+        if (state.guestbook) localStorage.setItem(`wedding_guestbook_${slug}`, JSON.stringify(state.guestbook));
+        if (state.tickets) localStorage.setItem(`wedding_tickets_${slug}`, JSON.stringify(state.tickets));
+        if (state.drawHistory) localStorage.setItem(`wedding_draw_history_${slug}`, JSON.stringify(state.drawHistory));
+        
+        console.log('✅ [weddingDb] Central online database synced successfully!');
+      }
+    } catch (err) {
+      console.warn('⚠️ [weddingDb] Server unsynced, running on local sandbox fallback:', err);
+    }
+  },
+
   getSections(slug: string = 'hanum-luthfi'): WeddingSectionType[] {
     const key = `wedding_sections_${slug}`;
     if (!localStorage.getItem(key)) {
@@ -305,6 +327,13 @@ export const weddingDb = {
   saveSections(sections: WeddingSectionType[], slug: string = 'hanum-luthfi') {
     const key = `wedding_sections_${slug}`;
     localStorage.setItem(key, JSON.stringify(sections));
+
+    // Dispatch async write to server
+    fetch('/api/wedding-state/sections', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sections })
+    }).catch(err => console.error('[weddingDb] Failed to sync sections to server:', err));
   },
 
   getSettings(slug: string = 'hanum-luthfi'): WeddingSettingsType {
@@ -325,6 +354,13 @@ export const weddingDb = {
   saveSettings(settings: WeddingSettingsType, slug: string = 'hanum-luthfi') {
     const key = `wedding_settings_${slug}`;
     localStorage.setItem(key, JSON.stringify(settings));
+
+    // Dispatch async write to server
+    fetch('/api/wedding-state/settings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ settings })
+    }).catch(err => console.error('[weddingDb] Failed to sync settings to server:', err));
   },
 
   getGuestbook(slug: string = 'hanum-luthfi'): WeddingGuestbookMessage[] {
@@ -337,6 +373,24 @@ export const weddingDb = {
 
   async addGuestbook(entry: Omit<WeddingGuestbookMessage, 'id' | 'createdAt'>, slug: string = 'hanum-luthfi'): Promise<WeddingGuestbookMessage> {
     const key = `wedding_guestbook_${slug}`;
+    try {
+      const response = await fetch('/api/wedding-state/guestbook', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(entry)
+      });
+      if (response.ok) {
+        const newEntry = await response.json();
+        const messages = this.getGuestbook(slug);
+        messages.unshift(newEntry);
+        localStorage.setItem(key, JSON.stringify(messages));
+        return newEntry;
+      }
+    } catch (err) {
+      console.warn('[weddingDb] Server error adding guestbook, falling back to local simulation:', err);
+    }
+
+    // Local sandbox simulation fallback
     const messages = this.getGuestbook(slug);
     const newEntry: WeddingGuestbookMessage = {
       ...entry,
@@ -345,7 +399,7 @@ export const weddingDb = {
       weddingSlug: slug
     };
 
-    // Perform server-side call for AI response check!
+    // Simulated AI response
     try {
       const response = await fetch('/api/wedding/ai-reply', {
         method: 'POST',
@@ -357,8 +411,7 @@ export const weddingDb = {
         newEntry.aiReply = data.reply;
       }
     } catch (err) {
-      console.error('Failed to generate AI auto-reply, using fallback.', err);
-      newEntry.aiReply = `Aamiin ya rabbal alamin. Terima kasih banyak Kak ${entry.name} atas doa restu, ucapan, dan kebaikan doanya untuk kami berdua!`;
+      newEntry.aiReply = `Aamiin ya rabbal alamin. Terima kasih banyak Kak ${entry.name} atas doa restu dan ucapan indahnya!`;
     }
 
     messages.unshift(newEntry);
@@ -376,17 +429,32 @@ export const weddingDb = {
 
   async addRSVPTicket(rsvp: Omit<WeddingRSVPTicket, 'id' | 'createdAt' | 'ticketNumber' | 'seatNumber' | 'qrCodeUrl' | 'checkInStatus'>, slug: string = 'hanum-luthfi'): Promise<WeddingRSVPTicket> {
     const key = `wedding_tickets_${slug}`;
+    try {
+      const response = await fetch('/api/wedding-state/rsvp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(rsvp)
+      });
+      if (response.ok) {
+        const newTicket = await response.json();
+        const tickets = this.getTickets(slug);
+        tickets.unshift(newTicket);
+        localStorage.setItem(key, JSON.stringify(tickets));
+        return newTicket;
+      }
+    } catch (err) {
+      console.warn('[weddingDb] Server error saving RSVP, falling back to local simulation:', err);
+    }
+
+    // Local sandbox simulation fallback
     const tickets = this.getTickets(slug);
     const id = `tix-${Date.now()}`;
     const serial = Math.floor(100 + Math.random() * 900);
     const ticketNumber = `VIP-2026-0913-${serial}`;
     
-    // Generate simple seat coordinates
     const row = ['A', 'B', 'C', 'D', 'E'][Math.floor(Math.random() * 5)];
     const num = Math.floor(1 + Math.random() * 30);
     const seatNumber = `Seat ${row}-${num}`;
-
-    // Generate unique QR server request
     const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(ticketNumber)}`;
 
     const newTicket: WeddingRSVPTicket = {
@@ -402,25 +470,34 @@ export const weddingDb = {
 
     tickets.unshift(newTicket);
     localStorage.setItem(key, JSON.stringify(tickets));
-
-    // Support standard rsvp reporting as well!
-    try {
-      const { dbService } = await import('./supabase');
-      await dbService.addRSVP({
-        name: rsvp.guestName,
-        attendance: rsvp.attendance === 'hadir' ? 'hadir' : 'tidak_hadir',
-        guestsCount: rsvp.guestsCount,
-        wishes: rsvp.session
-      });
-    } catch (e) {
-      console.warn('Educita main dbService addRSVP report error:', e);
-    }
-
     return newTicket;
   },
 
-  checkInTicket(ticketNumber: string, slug: string = 'hanum-luthfi'): { success: boolean; message: string; ticket?: WeddingRSVPTicket } {
+  async checkInTicket(ticketNumber: string, slug: string = 'hanum-luthfi'): Promise<{ success: boolean; message: string; ticket?: WeddingRSVPTicket }> {
     const key = `wedding_tickets_${slug}`;
+    try {
+      const response = await fetch('/api/wedding-state/checkin', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ticketNumber })
+      });
+      if (response.ok) {
+        const res = await response.json();
+        if (res.success && res.ticket) {
+          const tickets = this.getTickets(slug);
+          const tixIdx = tickets.findIndex(t => t.ticketNumber.trim().toUpperCase() === ticketNumber.trim().toUpperCase());
+          if (tixIdx !== -1) {
+            tickets[tixIdx] = res.ticket;
+            localStorage.setItem(key, JSON.stringify(tickets));
+          }
+        }
+        return res;
+      }
+    } catch (err) {
+      console.warn('[weddingDb] Server error during check-in, falling back to local calculation:', err);
+    }
+
+    // Local logic fallback
     const tickets = this.getTickets(slug);
     const tixIdx = tickets.findIndex(t => t.ticketNumber.trim().toUpperCase() === ticketNumber.trim().toUpperCase());
 
@@ -460,6 +537,13 @@ export const weddingDb = {
   saveRewards(rewards: SouvenirRewardType[], slug: string = 'hanum-luthfi') {
     const key = `wedding_rewards_${slug}`;
     localStorage.setItem(key, JSON.stringify(rewards));
+
+    // Dispatch async write to server
+    fetch('/api/wedding-state/rewards', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ rewards })
+    }).catch(err => console.error('[weddingDb] Failed to sync rewards to server:', err));
   },
 
   getDrawHistory(slug: string = 'hanum-luthfi'): RewardDrawHistory[] {
@@ -467,17 +551,38 @@ export const weddingDb = {
     return JSON.parse(localStorage.getItem(key) || '[]') as RewardDrawHistory[];
   },
 
-  drawSouvenirReward(guestName: string, slug: string = 'hanum-luthfi'): SouvenirRewardType | null {
+  async drawSouvenirReward(guestName: string, slug: string = 'hanum-luthfi'): Promise<SouvenirRewardType | null> {
+    const key = `wedding_rewards_${slug}`;
+    try {
+      const response = await fetch('/api/wedding-state/draw-souvenir', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ guestName })
+      });
+      if (response.ok) {
+        const reward = await response.json();
+        
+        // Refresh local cache representation of rewards
+        const cacheResponse = await fetch('/api/wedding-state');
+        if (cacheResponse.ok) {
+          const state = await cacheResponse.json();
+          if (state.rewards) localStorage.setItem(`wedding_rewards_${slug}`, JSON.stringify(state.rewards));
+          if (state.drawHistory) localStorage.setItem(`wedding_draw_history_${slug}`, JSON.stringify(state.drawHistory));
+        }
+
+        return reward;
+      }
+    } catch (err) {
+      console.warn('[weddingDb] Server error during souvenir draw, falling back to local simulation:', err);
+    }
+
+    // Local logic simulation fallback
     const rewards = this.getRewards(slug);
     const available = rewards.filter(r => r.remaining > 0);
     if (available.length === 0) return null;
 
     // Distribute by probability
-    const rand = Math.random() * 100;
-    let sum = 0;
     let selected: SouvenirRewardType | null = null;
-
-    // Normalize probabilities of available items to sum up to 100
     const totalProb = available.reduce((acc, r) => acc + r.probability, 0);
     let cumulative = 0;
     const itemRand = Math.random() * totalProb;

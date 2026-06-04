@@ -5,6 +5,7 @@ import {
   ArrowRight, ShieldCheck, Heart, Info, Lock, Link, AlertTriangle
 } from 'lucide-react';
 import { dbService } from './lib/supabase';
+import { weddingDb } from './lib/weddingDb';
 
 // Importing page views
 import HomeView from './components/HomeView';
@@ -34,6 +35,10 @@ export default function App() {
   useEffect(() => {
     localStorage.setItem('educita_theme_dark', String(isDarkMode));
   }, [isDarkMode]);
+
+  useEffect(() => {
+    weddingDb.initialize().catch(err => console.error('[App] Failed database initialization:', err));
+  }, []);
 
   // Form state for floating general consultation
   const [isBookingSuccess, setIsBookingSuccess] = useState(false);
@@ -147,7 +152,7 @@ export default function App() {
             <span className="w-3 h-3 rounded-full bg-emerald-500 block"></span>
           </div>
           <div className="h-4 w-[1px] bg-slate-700 hidden sm:block"></div>
-          <span className="font-bold text-[10px] tracking-widest text-emerald-400 hidden sm:inline uppercase">SYSTEM SIMULATOR</span>
+          <span className="font-bold text-[10px] tracking-widest text-emerald-400 hidden sm:inline uppercase">V1.0 PRODUCTION SERVER</span>
         </div>
 
         {/* Dynamic Glass URL Bar */}

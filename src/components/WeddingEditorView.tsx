@@ -61,7 +61,12 @@ export default function WeddingEditorView() {
     loadAllWeddingData();
   }, []);
 
-  const loadAllWeddingData = () => {
+  const loadAllWeddingData = async () => {
+    try {
+      await weddingDb.initialize(slug);
+    } catch (err) {
+      console.warn('Sync failed:', err);
+    }
     setSections(weddingDb.getSections(slug).sort((a, b) => a.order - b.order));
     setSettings(weddingDb.getSettings(slug));
     setRewards(weddingDb.getRewards(slug));

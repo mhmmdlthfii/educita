@@ -38,8 +38,13 @@ export default function AdminWeddingView() {
     loadAllData();
   }, []);
 
-  const loadAllData = () => {
+  const loadAllData = async () => {
     const slug = 'hanum-luthfi';
+    try {
+      await weddingDb.initialize(slug);
+    } catch (err) {
+      console.warn('Sync weddingDb failed:', err);
+    }
     setSections(weddingDb.getSections(slug).sort((a, b) => a.order - b.order));
     setSettings(weddingDb.getSettings(slug));
     setGuestBook(weddingDb.getGuestbook(slug));
@@ -182,10 +187,10 @@ export default function AdminWeddingView() {
   };
 
   // 5. QR CODE ADMISSIONS CHECKIN ENGINE
-  const handleCheckInSubmit = (e: React.FormEvent) => {
+  const handleCheckInSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!checkInCode) return;
-    const res = weddingDb.checkInTicket(checkInCode);
+    const res = await weddingDb.checkInTicket(checkInCode);
     setCheckInResult(res);
     if (res.success) {
       showFlash(`Check-in tervalidasi: ${res.ticket?.guestName}`);
