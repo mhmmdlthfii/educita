@@ -140,6 +140,8 @@ const FRIEND_STORIES = [
 export default function WeddingView({ toGuest, slug = 'hanum-luthfi' }: WeddingViewProps) {
   // Database States
   const [sections, setSections] = useState<WeddingSectionType[]>([]);
+  const moviePosterSec = sections.find(s => s.type === 'movie_poster');
+  const chaptersLength = moviePosterSec?.chapters?.length || 5;
   const [settings, setSettings] = useState<WeddingSettingsType | null>(null);
   const [guestBook, setGuestBook] = useState<WeddingGuestbookMessage[]>([]);
   const [rewardsList, setRewardsList] = useState<SouvenirRewardType[]>([]);
@@ -288,11 +290,11 @@ export default function WeddingView({ toGuest, slug = 'hanum-luthfi' }: WeddingV
     if (videoPlaying) return;
     
     const interval = setInterval(() => {
-      setCarouselIdx((prev) => (prev + 1) % CINEMATIC_CHAPTERS.length);
+      setCarouselIdx((prev) => (prev + 1) % chaptersLength);
     }, 4500); // Transitions automatically every 4.5 seconds
 
     return () => clearInterval(interval);
-  }, [videoPlaying]);
+  }, [videoPlaying, chaptersLength]);
 
   // Audio Autoplay & Lifecycle
   useEffect(() => {
@@ -337,14 +339,15 @@ export default function WeddingView({ toGuest, slug = 'hanum-luthfi' }: WeddingV
 
   // Story Autoplay Carousel Timer
   useEffect(() => {
-    if (!isOpen || guestBook.length === 0) return;
+    const visibleStories = guestBook.filter(g => !g.isHidden);
+    if (!isOpen || visibleStories.length === 0) return;
     
     setStoryProgress(0);
     const timer = setInterval(() => {
       setStoryProgress(prev => {
         if (prev >= 100) {
           // Move to next story
-          setActiveStoryIdx(current => (current + 1) % guestBook.length);
+          setActiveStoryIdx(current => (current + 1) % visibleStories.length);
           return 0;
         }
         return prev + 1;
@@ -612,11 +615,7 @@ export default function WeddingView({ toGuest, slug = 'hanum-luthfi' }: WeddingV
               </h1>
             </div>
 
-            {sectionCover?.description && (
-              <p className="text-[11px] text-slate-400 italic max-w-sm mx-auto leading-relaxed whitespace-pre-line bg-black/30 backdrop-blur-xs p-3 rounded-xl border border-white/5">
-                {sectionCover.description}
-              </p>
-            )}
+            {/* Remove quote from cover screen 1 */}
 
             <div className="text-[10px] tracking-[0.25em] font-bold text-slate-400 font-mono">
               {settings?.eventDate ? (
@@ -1054,7 +1053,7 @@ export default function WeddingView({ toGuest, slug = 'hanum-luthfi' }: WeddingV
               <div className="w-8 h-[1.5px] bg-red-700 mx-auto my-2"></div>
 
               <p className="text-[9.5px] text-slate-350 max-w-md mx-auto leading-relaxed font-mono tracking-wider uppercase bg-black/45 backdrop-blur-xs p-3.5 rounded-2xl border border-white/5 whitespace-pre-wrap">
-                {sec.description || `PUTRA DARI BAPAK H. ABDURRAHMAN & IBU HJ. AMINAH\n&\nPUTRI PERTAMA DARI BAPAK H. BAMBANG SUSILO & IBU HJ. HARTATI`}
+                {`PUTRA DARI BAPAK H. ABDURRAHMAN & IBU HJ. AMINAH\n&\nPUTRI PERTAMA DARI BAPAK H. BAMBANG SUSILO & IBU HJ. HARTATI`}
               </p>
             </div>
 
@@ -1117,6 +1116,7 @@ export default function WeddingView({ toGuest, slug = 'hanum-luthfi' }: WeddingV
         {/* Render each dynamic section in order */}
         {sections.filter(s => s.isEnabled && s.type !== 'cover').map((sec) => {
           if (sec.type === 'movie_poster') {
+            const chapters = sec.chapters || [];
             return (
               <section key={sec.id} className="space-y-6">
                 <div className="flex items-end justify-between pb-2">
@@ -1127,7 +1127,7 @@ export default function WeddingView({ toGuest, slug = 'hanum-luthfi' }: WeddingV
                   <div className="flex items-center gap-1">
                     <button 
                       onClick={() => {
-                        setCarouselIdx(p => (p - 1 + CINEMATIC_CHAPTERS.length) % CINEMATIC_CHAPTERS.length);
+                        setCarouselIdx(p => (p - 1 + chapters.length) % chapters.length);
                         setVideoPlaying(false);
                       }}
                       className="w-10 h-10 rounded-full bg-neutral-900 shadow-md flex items-center justify-center hover:bg-neutral-850 active:scale-95 transition text-stone-400 hover:text-white"
@@ -1136,7 +1136,7 @@ export default function WeddingView({ toGuest, slug = 'hanum-luthfi' }: WeddingV
                     </button>
                     <button 
                       onClick={() => {
-                        setCarouselIdx(p => (p + 1) % CINEMATIC_CHAPTERS.length);
+                        setCarouselIdx(p => (p + 1) % chapters.length);
                         setVideoPlaying(false);
                       }}
                       className="w-10 h-10 rounded-full bg-neutral-900 shadow-md flex items-center justify-center hover:bg-neutral-850 active:scale-95 transition text-stone-400 hover:text-white"
@@ -1149,8 +1149,8 @@ export default function WeddingView({ toGuest, slug = 'hanum-luthfi' }: WeddingV
                 {/* 3D stacked movie poster carousel container */}
                 <div className="relative w-full overflow-hidden py-4 select-none">
                   <div className="flex justify-center items-center h-[340px] relative">
-                    {CINEMATIC_CHAPTERS.map((chap, idx) => {
-                      const total = CINEMATIC_CHAPTERS.length;
+                    {chapters.map((chap, idx) => {
+                      const total = chapters.length;
                       let offset = idx - carouselIdx;
                       // Handle modular wrap-around for infinite carousel loop
                       if (offset > total / 2) {
@@ -1216,7 +1216,7 @@ export default function WeddingView({ toGuest, slug = 'hanum-luthfi' }: WeddingV
  
                   {/* Dot sliders */}
                   <div className="flex gap-2 justify-center py-2">
-                    {CINEMATIC_CHAPTERS.map((_, dotIdx) => (
+                    {chapters.map((_, dotIdx) => (
                       <button
                         key={dotIdx}
                         onClick={() => {
@@ -1232,16 +1232,29 @@ export default function WeddingView({ toGuest, slug = 'hanum-luthfi' }: WeddingV
                 </div>
  
                 {/* Simulated inline Video Playback */}
-                {videoPlaying && (
+                {videoPlaying && chapters[carouselIdx] && (
                   <div className="p-4 bg-neutral-900/40 backdrop-blur-md rounded-2xl text-center shadow-[0_25px_60px_rgba(0,0,0,0.85)] animate-[fadeIn_0.3s_ease-out] space-y-2 max-w-xl mx-auto">
-                    <video 
-                      src={CINEMATIC_CHAPTERS[carouselIdx].videoUrl} 
-                      controls 
-                      autoPlay
-                      className="w-full h-auto max-h-72 rounded-xl bg-black shadow-inner"
-                    />
+                    {getYouTubeId(chapters[carouselIdx].videoUrl) ? (
+                      <div className="relative w-full aspect-video rounded-xl overflow-hidden bg-black shadow-inner">
+                        <iframe
+                          src={`https://www.youtube.com/embed/${getYouTubeId(chapters[carouselIdx].videoUrl)}?autoplay=1&rel=0`}
+                          title={chapters[carouselIdx].title}
+                          className="absolute inset-0 w-full h-full"
+                          frameBorder="0"
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                          allowFullScreen
+                        ></iframe>
+                      </div>
+                    ) : (
+                      <video 
+                        src={chapters[carouselIdx].videoUrl} 
+                        controls 
+                        autoPlay
+                        className="w-full h-auto max-h-72 rounded-xl bg-black shadow-inner"
+                      />
+                    )}
                     <p className="text-[10px] text-[#dfb76c] font-mono uppercase tracking-widest mt-1">
-                      NOW PLAYING: CHAPTER {carouselIdx + 1} - "{CINEMATIC_CHAPTERS[carouselIdx].quote}"
+                      NOW PLAYING: CHAPTER {carouselIdx + 1} - "{chapters[carouselIdx].quote}"
                     </p>
                   </div>
                 )}
@@ -1372,20 +1385,7 @@ export default function WeddingView({ toGuest, slug = 'hanum-luthfi' }: WeddingV
           // 2.F SECTION TYPE: GALLERY SHOWCASE
           // ==========================================
           if (sec.type === 'gallery') {
-            const galleryImages = [
-              'https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&q=80&w=600',
-              'https://images.unsplash.com/photo-1515934751635-c81c6bc9a2d8?auto=format&fit=crop&q=80&w=600',
-              'https://images.unsplash.com/photo-1606800052052-a08af7148866?auto=format&fit=crop&q=80&w=600',
-              'https://images.unsplash.com/photo-1524661135-423995f22d0b?auto=format&fit=crop&q=80&w=600',
-              'https://images.unsplash.com/photo-1532712938310-34cb3982ef74?auto=format&fit=crop&q=80&w=600',
-              'https://images.unsplash.com/photo-1465495976277-4387d4b0b4c6?auto=format&fit=crop&q=80&w=600',
-              'https://images.unsplash.com/photo-1511285560929-80b456fea0bc?auto=format&fit=crop&q=80&w=600',
-              'https://images.unsplash.com/photo-1583939003579-730e3918a45a?auto=format&fit=crop&q=80&w=600',
-              'https://images.unsplash.com/photo-1519225495810-7512c696505a?auto=format&fit=crop&q=80&w=600',
-              'https://images.unsplash.com/photo-1502444330042-d1a1ddf9bb5b?auto=format&fit=crop&q=80&w=600',
-              'https://images.unsplash.com/photo-1507504038482-76210061e0bb?auto=format&fit=crop&q=80&w=600',
-              'https://images.unsplash.com/photo-1591604466107-ec97de577aff?auto=format&fit=crop&q=80&w=600'
-            ];
+            const galleryImages = sec.images || [];
 
             const getSpanClass = (idx: number) => {
               switch (idx) {
@@ -1875,8 +1875,9 @@ export default function WeddingView({ toGuest, slug = 'hanum-luthfi' }: WeddingV
           // 2.J SECTION TYPE: INSTAGRAM STORY GUESTBOOK
           // ==========================================
           if (sec.type === 'guestbook') {
-            const hasStories = guestBook.length > 0;
-            const currentStory = hasStories ? guestBook[activeStoryIdx] : null;
+            const visibleGuestBook = guestBook.filter(g => !g.isHidden);
+            const hasStories = visibleGuestBook.length > 0;
+            const currentStory = hasStories ? visibleGuestBook[activeStoryIdx % visibleGuestBook.length] : null;
 
             return (
               <React.Fragment key="thematic-dresscode">
@@ -1935,8 +1936,8 @@ export default function WeddingView({ toGuest, slug = 'hanum-luthfi' }: WeddingV
                 {/* Scrollable round avatars train - directly above preview story and wishes form */}
                 <section className="select-none py-2">
                   <div className="flex gap-4 overflow-x-auto py-3 px-4 justify-start sm:justify-center scrollbar-hide max-w-xl mx-auto pb-4 items-center">
-                    {/* Dynamic integration: Maps directly over guestBook messages with perfect centering */}
-                    {guestBook.map((story, idx) => (
+                    {/* Dynamic integration: Maps directly over visibleGuestBook messages with perfect centering */}
+                    {visibleGuestBook.map((story, idx) => (
                       <button 
                         key={story.id || idx}
                         onClick={() => {
@@ -1974,7 +1975,7 @@ export default function WeddingView({ toGuest, slug = 'hanum-luthfi' }: WeddingV
                         
                         {/* Top Story Progressive bar list */}
                         <div className="flex gap-1 z-10">
-                          {hasStories && guestBook.map((_, idx) => (
+                          {hasStories && visibleGuestBook.map((_, idx) => (
                             <div key={idx} className="h-0.5 flex-1 bg-stone-900 rounded-full overflow-hidden">
                               <div 
                                 className="h-full bg-gradient-to-r from-red-500 to-amber-500 transition-all duration-75"
@@ -2016,13 +2017,13 @@ export default function WeddingView({ toGuest, slug = 'hanum-luthfi' }: WeddingV
                         {/* Left/Right click triggers zone */}
                         <div className="absolute inset-y-0 left-0 w-1/4 z-20 cursor-w-resize" onClick={() => {
                           if (hasStories) {
-                            setActiveStoryIdx(prev => (prev === 0 ? guestBook.length - 1 : prev - 1));
+                            setActiveStoryIdx(prev => (prev === 0 ? visibleGuestBook.length - 1 : prev - 1));
                             setStoryProgress(0);
                           }
                         }}></div>
                         <div className="absolute inset-y-0 right-0 w-1/4 z-20 cursor-e-resize" onClick={() => {
                           if (hasStories) {
-                            setActiveStoryIdx(prev => (prev + 1) % guestBook.length);
+                            setActiveStoryIdx(prev => (prev + 1) % visibleGuestBook.length);
                             setStoryProgress(0);
                           }
                         }}></div>
@@ -2067,7 +2068,7 @@ export default function WeddingView({ toGuest, slug = 'hanum-luthfi' }: WeddingV
                         <button 
                           onClick={() => {
                             if (hasStories) {
-                              setActiveStoryIdx(prev => (prev === 0 ? guestBook.length - 1 : prev - 1));
+                              setActiveStoryIdx(prev => (prev === 0 ? visibleGuestBook.length - 1 : prev - 1));
                               setStoryProgress(0);
                             }
                           }}
@@ -2076,12 +2077,12 @@ export default function WeddingView({ toGuest, slug = 'hanum-luthfi' }: WeddingV
                           <ChevronLeft className="w-4 h-4" />
                         </button>
                         <span className="font-mono text-[9px] text-[#dfb76c] font-black uppercase">
-                          {guestBook.length > 0 ? `${activeStoryIdx + 1} / ${guestBook.length} DOA` : '0 DOA'}
+                          {visibleGuestBook.length > 0 ? `${activeStoryIdx + 1} / ${visibleGuestBook.length} DOA` : '0 DOA'}
                         </span>
                         <button 
                           onClick={() => {
                             if (hasStories) {
-                              setActiveStoryIdx(prev => (prev + 1) % guestBook.length);
+                              setActiveStoryIdx(prev => (prev + 1) % visibleGuestBook.length);
                               setStoryProgress(0);
                             }
                           }}

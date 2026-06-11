@@ -543,6 +543,23 @@ Kembalikan HANYA format JSON murni tanpa markdown formatting, tanpa backticks \`
     }
   });
 
+  // Save/Edit all guestbook messages (Moderation)
+  app.post('/api/wedding-state/guestbook-all', (req, res) => {
+    try {
+      const { guestbook } = req.body || {};
+      if (!Array.isArray(guestbook)) {
+        return res.status(400).json({ error: 'Guestbook array is required' });
+      }
+      const state = readState();
+      state.guestbook = guestbook;
+      writeState(state);
+      res.json({ success: true, guestbook: state.guestbook });
+    } catch (err: any) {
+      console.error('Failed to save wedding guestbook:', err);
+      res.status(500).json({ error: err.message });
+    }
+  });
+
   // Add guestbook messages (with optional Gemini reply generated automatically)
   app.post('/api/wedding-state/guestbook', async (req, res) => {
     try {

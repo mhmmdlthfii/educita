@@ -5,7 +5,7 @@ import {
   Trash2, Edit2, Heart, Gift, MapPin, Calendar, HelpCircle, 
   User, Check, ChevronDown, ChevronUp, Music, Info, Award, RefreshCw, Undo, EyeOff, Upload
 } from 'lucide-react';
-import { weddingDb, WeddingSectionType, WeddingSettingsType, SouvenirRewardType } from '../lib/weddingDb';
+import { weddingDb, WeddingSectionType, WeddingSettingsType, SouvenirRewardType, WeddingGuestbookMessage } from '../lib/weddingDb';
 import WeddingView from './WeddingView';
 
 // Preset Unsplash images for easy visual picking
@@ -46,6 +46,7 @@ export default function WeddingEditorView() {
   const [sections, setSections] = useState<WeddingSectionType[]>([]);
   const [settings, setSettings] = useState<WeddingSettingsType | null>(null);
   const [rewards, setRewards] = useState<SouvenirRewardType[]>([]);
+  const [guestbook, setGuestbook] = useState<WeddingGuestbookMessage[]>([]);
   
   // UI States
   const [activeSectionAccordion, setActiveSectionAccordion] = useState<string>('general');
@@ -70,6 +71,7 @@ export default function WeddingEditorView() {
     setSections(weddingDb.getSections(slug).sort((a, b) => a.order - b.order));
     setSettings(weddingDb.getSettings(slug));
     setRewards(weddingDb.getRewards(slug));
+    setGuestbook(weddingDb.getGuestbook(slug));
   };
 
   const showFlash = (text: string, type: 'success' | 'info' | 'error' = 'success') => {
@@ -148,6 +150,7 @@ export default function WeddingEditorView() {
       weddingDb.saveSections(sections, slug);
       weddingDb.saveSettings(settings, slug);
       weddingDb.saveRewards(rewards, slug);
+      weddingDb.saveGuestbook(guestbook, slug);
 
       // Force refresh of preview component
       setPreviewKey(prev => prev + 1);
@@ -155,6 +158,26 @@ export default function WeddingEditorView() {
     } catch (err) {
       console.error(err);
       showFlash('Gagal menyimpan data undangan', 'error');
+    }
+  };
+
+  const toggleMessageVisibility = (id: string) => {
+    const nextGuestbook = guestbook.map(msg => 
+      msg.id === id ? { ...msg, isHidden: !msg.isHidden } : msg
+    );
+    setGuestbook(nextGuestbook);
+    weddingDb.saveGuestbook(nextGuestbook, slug);
+    setPreviewKey(prev => prev + 1);
+    showFlash('Status tayang ucapan diperbarui!', 'success');
+  };
+
+  const handleDeleteMessage = (id: string) => {
+    if (window.confirm('Apakah Anda yakin ingin menghapus ucapan ini secara permanen?')) {
+      const nextGuestbook = guestbook.filter(msg => msg.id !== id);
+      setGuestbook(nextGuestbook);
+      weddingDb.saveGuestbook(nextGuestbook, slug);
+      setPreviewKey(prev => prev + 1);
+      showFlash('Ucapan dihapus secara permanen!', 'success');
     }
   };
 
@@ -221,6 +244,8 @@ export default function WeddingEditorView() {
     id?: string;
     field: string;
     type: 'section' | 'settings' | 'reward';
+    index?: number;
+    subField?: string;
   } | null>(null);
 
   useEffect(() => {
@@ -304,9 +329,28 @@ export default function WeddingEditorView() {
   const handleSelectImageFromLibrary = (url: string) => {
     if (!imageSelectorTarget) return;
 
-    const { id, field, type } = imageSelectorTarget;
+    const { id, field, type, index, subField } = imageSelectorTarget;
     if (type === 'section' && id) {
-      updateSectionField(id, field as keyof WeddingSectionType, url);
+      if (index !== undefined) {
+        const targetSec = sections.find(s => s.id === id);
+        if (targetSec) {
+          if (subField) {
+            // Edit nested chapters[index][subField]
+            const currentChapters = targetSec.chapters ? [...targetSec.chapters] : [];
+            if (currentChapters[index]) {
+              currentChapters[index] = { ...currentChapters[index], [subField]: url };
+              updateSectionField(id, 'chapters' as any, currentChapters);
+            }
+          } else {
+            // Edit flat images[index]
+            const currentImages = targetSec.images ? [...targetSec.images] : [];
+            currentImages[index] = url;
+            updateSectionField(id, 'images' as any, currentImages);
+          }
+        }
+      } else {
+        updateSectionField(id, field as keyof WeddingSectionType, url);
+      }
     } else if (type === 'settings') {
       updateGeneralSetting(field as keyof WeddingSettingsType, url);
     } else if (type === 'reward' && id) {
@@ -317,7 +361,7 @@ export default function WeddingEditorView() {
     showFlash('Gambar berhasil dipilih dari penyimpanan otomatis!', 'success');
   };
 
-  const openImagePicker = (target: { id?: string; field: string; type: 'section' | 'settings' | 'reward' }) => {
+  const openImagePicker = (target: { id?: string; field: string; type: 'section' | 'settings' | 'reward'; index?: number; subField?: string }) => {
     setImageSelectorTarget(target);
     setImageSelectorOpen(true);
   };
@@ -728,13 +772,10 @@ export default function WeddingEditorView() {
                               alt="Live Preview Bride" 
                               className="w-full h-full object-cover" 
                               referrerPolicy="no-referrer"
-                              onError={(e) => {
-                                (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=150';
-                              }}
                             />
                           ) : (
-                            <div className="w-full h-full flex items-center justify-center text-stone-600 bg-neutral-900">
-                              No Pic
+                            <div className="w-full h-full flex items-center justify-center text-[10px] text-stone-600 bg-neutral-900 font-mono">
+                              Kosong
                             </div>
                           )}
                         </div>
@@ -762,6 +803,21 @@ export default function WeddingEditorView() {
                           <ImageIcon className="w-3.5 h-3.5 text-[#dfb76c]" />
                           <span>Pilih Media</span>
                         </button>
+                      </div>
+
+                      {/* Presets Row */}
+                      <div className="mt-2.5 flex flex-wrap gap-1.5">
+                        <span className="text-[8px] uppercase font-mono text-stone-500 w-full mb-0.5">Rekomendasi Foto Mempelai Wanita:</span>
+                        {IMAGE_PRESETS.bride.map((preset, idx) => (
+                          <button
+                            key={idx}
+                            type="button"
+                            onClick={() => updateSectionField(sectionBride.id, 'mediaUrl', preset.url)}
+                            className="text-[8.5px] font-mono px-2 py-1 bg-neutral-900 border border-neutral-850 hover:border-[#dfb76c] text-stone-300 rounded transition cursor-pointer"
+                          >
+                            {preset.label}
+                          </button>
+                        ))}
                       </div>
                     </div>
                   </div>
@@ -816,13 +872,10 @@ export default function WeddingEditorView() {
                               alt="Live Preview Groom" 
                               className="w-full h-full object-cover" 
                               referrerPolicy="no-referrer"
-                              onError={(e) => {
-                                (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=150';
-                              }}
                             />
                           ) : (
-                            <div className="w-full h-full flex items-center justify-center text-stone-600 bg-neutral-900">
-                              No Pic
+                            <div className="w-full h-full flex items-center justify-center text-[10px] text-stone-600 bg-neutral-900 font-mono">
+                              Kosong
                             </div>
                           )}
                         </div>
@@ -850,6 +903,21 @@ export default function WeddingEditorView() {
                           <ImageIcon className="w-3.5 h-3.5 text-[#dfb76c]" />
                           <span>Pilih Media</span>
                         </button>
+                      </div>
+
+                      {/* Presets Row */}
+                      <div className="mt-2.5 flex flex-wrap gap-1.5">
+                        <span className="text-[8px] uppercase font-mono text-stone-500 w-full mb-0.5">Rekomendasi Foto Mempelai Pria:</span>
+                        {IMAGE_PRESETS.groom.map((preset, idx) => (
+                          <button
+                            key={idx}
+                            type="button"
+                            onClick={() => updateSectionField(sectionGroom.id, 'mediaUrl', preset.url)}
+                            className="text-[8.5px] font-mono px-2 py-1 bg-neutral-900 border border-neutral-850 hover:border-[#dfb76c] text-stone-300 rounded transition cursor-pointer"
+                          >
+                            {preset.label}
+                          </button>
+                        ))}
                       </div>
                     </div>
                   </div>
@@ -943,7 +1011,7 @@ export default function WeddingEditorView() {
                           </div>
                         )}
 
-                        {sec.mediaUrl !== undefined && sec.type !== 'bride' && sec.type !== 'groom' && (
+                        {sec.mediaUrl !== undefined && sec.type !== 'bride' && sec.type !== 'groom' && sec.type !== 'gallery' && sec.type !== 'movie_poster' && (
                           <div>
                             <label className="block text-[8px] uppercase font-mono text-stone-400 mb-1">
                               {sec.type === 'cover' ? 'URL Gambar Latar Belakang Cover' : 'URL Media Gambar (Cover / Poster / Galeri)'}
@@ -958,13 +1026,10 @@ export default function WeddingEditorView() {
                                     alt="Live Preview Section" 
                                     className="w-full h-full object-cover" 
                                     referrerPolicy="no-referrer"
-                                    onError={(e) => {
-                                      (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&q=80&w=500';
-                                    }}
                                   />
                                 ) : (
-                                  <div className="w-full h-full flex items-center justify-center text-stone-600 bg-neutral-900">
-                                    No Pic
+                                  <div className="w-full h-full flex items-center justify-center text-[10px] text-stone-600 bg-neutral-900 font-mono">
+                                    Kosong
                                   </div>
                                 )}
                               </div>
@@ -991,6 +1056,233 @@ export default function WeddingEditorView() {
                                 <ImageIcon className="w-3.5 h-3.5 text-[#dfb76c]" />
                                 <span>Pilih Gambar</span>
                               </button>
+                            </div>
+
+                            {/* Presets Row for Cover */}
+                            {sec.type === 'cover' && (
+                              <div className="mt-2.5 flex flex-wrap gap-1.5">
+                                <span className="text-[8px] uppercase font-mono text-stone-500 w-full mb-0.5">Rekomendasi Foto Latar Belakang:</span>
+                                {IMAGE_PRESETS.cover.map((preset, pidx) => (
+                                  <button
+                                    key={pidx}
+                                    type="button"
+                                    onClick={() => updateSectionField(sec.id, 'mediaUrl', preset.url)}
+                                    className="text-[8.5px] font-mono px-2 py-1 bg-neutral-900 border border-neutral-850 hover:border-[#dfb76c] text-stone-300 rounded transition cursor-pointer"
+                                  >
+                                    {preset.label}
+                                  </button>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        )}
+
+                        {/* GALLERY TYPE CUSTOM EDITOR */}
+                        {sec.type === 'gallery' && (
+                          <div className="space-y-4 mt-4 p-4 bg-neutral-900/60 rounded-2xl border border-neutral-800">
+                            <div className="flex justify-between items-center">
+                              <span className="text-[10px] font-black uppercase font-mono tracking-wider text-[#dfb76c]">Daftar Foto Galeri ({sec.images?.length || 0})</span>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const currentImages = sec.images ? [...sec.images] : [];
+                                  currentImages.push('https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&q=80&w=600');
+                                  updateSectionField(sec.id, 'images' as any, currentImages);
+                                }}
+                                className="px-2.5 py-1 text-[9px] font-black uppercase tracking-wider font-mono bg-amber-500/10 hover:bg-amber-500/20 text-[#dfb76c] border border-[#dfb76c]/30 rounded-md transition cursor-pointer"
+                              >
+                                + Tambah Foto Baru
+                              </button>
+                            </div>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-[300px] overflow-y-auto pr-1">
+                              {(sec.images || []).map((imgUrl, index) => (
+                                <div key={index} className="p-2.5 bg-neutral-950 rounded-xl border border-neutral-850 space-y-2 relative group">
+                                  <div className="flex gap-2.5 items-center">
+                                    <div className="w-14 h-14 bg-neutral-900 border border-neutral-800 rounded-lg overflow-hidden shrink-0">
+                                      <img src={imgUrl} alt={`Gallery index ${index}`} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                                    </div>
+                                    <div className="flex-1 space-y-1.5">
+                                      <span className="text-[8px] font-mono font-bold text-stone-500 block uppercase">FOTO GALERI #{index + 1}</span>
+                                      <input
+                                        type="text"
+                                        className="w-full bg-neutral-900 border border-neutral-800 text-stone-300 font-mono p-1.5 rounded-md text-[9px] focus:outline-none focus:border-red-900"
+                                        value={imgUrl}
+                                        onChange={(e) => {
+                                          const currentImages = [...(sec.images || [])];
+                                          currentImages[index] = e.target.value;
+                                          updateSectionField(sec.id, 'images' as any, currentImages);
+                                        }}
+                                      />
+                                    </div>
+                                  </div>
+                                  <div className="flex justify-between items-center pt-1 border-t border-neutral-850/50">
+                                    <button
+                                      type="button"
+                                      onClick={() => openImagePicker({ id: sec.id, field: 'images', type: 'section', index })}
+                                      className="px-2 py-1 text-[8px] font-bold font-mono bg-neutral-900 hover:bg-neutral-800 text-[#dfb76c] border border-neutral-850 rounded flex items-center gap-1 cursor-pointer"
+                                    >
+                                      <ImageIcon className="w-3 h-3 text-[#dfb76c]" />
+                                      <span>Ganti Gambar</span>
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        const currentImages = [...(sec.images || [])];
+                                        currentImages.splice(index, 1);
+                                        updateSectionField(sec.id, 'images' as any, currentImages);
+                                      }}
+                                      className="px-2 py-1 text-[8px] font-bold font-mono bg-red-950/20 hover:bg-red-950/40 text-red-400 border border-red-900/30 rounded cursor-pointer"
+                                    >
+                                      Hapus
+                                    </button>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* MOVIE_POSTER TYPE CUSTOM EDITOR */}
+                        {sec.type === 'movie_poster' && (
+                          <div className="space-y-4 mt-4 p-4 bg-neutral-900/60 rounded-2xl border border-neutral-800">
+                            <div className="flex justify-between items-center">
+                              <span className="text-[10px] font-black uppercase font-mono tracking-wider text-[#dfb76c]">Daftar Bab Sinema ({sec.chapters?.length || 0})</span>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const currentChapters = sec.chapters ? [...sec.chapters] : [];
+                                  currentChapters.push({
+                                    title: "Bab Baru",
+                                    subtitle: "Sub Judul Bab",
+                                    genre: "Romansa",
+                                    image: "https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&q=80&w=500",
+                                    quote: "Kata mutiara bab baru di sini.",
+                                    videoUrl: "https://www.w3schools.com/html/mov_bbb.mp4"
+                                  });
+                                  updateSectionField(sec.id, 'chapters' as any, currentChapters);
+                                }}
+                                className="px-2.5 py-1 text-[9px] font-black uppercase tracking-wider font-mono bg-amber-500/10 hover:bg-amber-500/20 text-[#dfb76c] border border-[#dfb76c]/30 rounded-md transition cursor-pointer"
+                              >
+                                + Tambah Bab Baru
+                              </button>
+                            </div>
+                            <div className="space-y-3 max-h-[400px] overflow-y-auto pr-1">
+                              {(sec.chapters || []).map((chap, index) => (
+                                <div key={index} className="p-4 bg-neutral-950 rounded-xl border border-neutral-850 space-y-3">
+                                  <div className="flex items-center justify-between pb-1.5 border-b border-neutral-850/50">
+                                    <span className="text-[9px] font-mono font-black text-[#dfb76c]">BAB #{index + 1} : {chap.title || 'Untitled'}</span>
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        const currentChapters = [...(sec.chapters || [])];
+                                        currentChapters.splice(index, 1);
+                                        updateSectionField(sec.id, 'chapters' as any, currentChapters);
+                                      }}
+                                      className="px-1.5 py-0.5 text-[8px] font-bold font-mono bg-red-950/20 hover:bg-red-950/40 text-red-400 border border-red-900/30 rounded cursor-pointer"
+                                    >
+                                      Hapus Bab
+                                    </button>
+                                  </div>
+                                  
+                                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                    <div>
+                                      <label className="block text-[8px] uppercase font-mono text-stone-500 mb-1">Judul Bab</label>
+                                      <input
+                                        type="text"
+                                        className="w-full bg-neutral-900 border border-neutral-800 text-white p-2 rounded-md text-[10px]"
+                                        value={chap.title}
+                                        onChange={(e) => {
+                                          const currentChapters = [...(sec.chapters || [])];
+                                          currentChapters[index] = { ...currentChapters[index], title: e.target.value };
+                                          updateSectionField(sec.id, 'chapters' as any, currentChapters);
+                                        }}
+                                      />
+                                    </div>
+                                    <div>
+                                      <label className="block text-[8px] uppercase font-mono text-stone-500 mb-1">Sub Judul Bab</label>
+                                      <input
+                                        type="text"
+                                        className="w-full bg-neutral-900 border border-neutral-800 text-white p-2 rounded-md text-[10px]"
+                                        value={chap.subtitle}
+                                        onChange={(e) => {
+                                          const currentChapters = [...(sec.chapters || [])];
+                                          currentChapters[index] = { ...currentChapters[index], subtitle: e.target.value };
+                                          updateSectionField(sec.id, 'chapters' as any, currentChapters);
+                                        }}
+                                      />
+                                    </div>
+                                  </div>
+
+                                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                    <div>
+                                      <label className="block text-[8px] uppercase font-mono text-stone-500 mb-1">Genre</label>
+                                      <input
+                                        type="text"
+                                        className="w-full bg-neutral-900 border border-neutral-800 text-white p-2 rounded-md text-[10px]"
+                                        value={chap.genre}
+                                        onChange={(e) => {
+                                          const currentChapters = [...(sec.chapters || [])];
+                                          currentChapters[index] = { ...currentChapters[index], genre: e.target.value };
+                                          updateSectionField(sec.id, 'chapters' as any, currentChapters);
+                                        }}
+                                      />
+                                    </div>
+                                    <div>
+                                      <label className="block text-[8px] uppercase font-mono text-stone-500 mb-1">Kutipan / Quote Bab</label>
+                                      <input
+                                        type="text"
+                                        className="w-full bg-neutral-900 border border-neutral-800 text-white p-2 rounded-md text-[10px]"
+                                        value={chap.quote}
+                                        onChange={(e) => {
+                                          const currentChapters = [...(sec.chapters || [])];
+                                          currentChapters[index] = { ...currentChapters[index], quote: e.target.value };
+                                          updateSectionField(sec.id, 'chapters' as any, currentChapters);
+                                        }}
+                                      />
+                                    </div>
+                                  </div>
+
+                                  <div className="grid grid-cols-1 gap-3">
+                                    <div>
+                                      <label className="block text-[8px] uppercase font-mono text-stone-500 mb-1">URL Media Gambar Poster Bab</label>
+                                      <div className="flex gap-2">
+                                        <input
+                                          type="text"
+                                          className="flex-1 bg-neutral-900 border border-neutral-800 text-stone-300 font-mono p-2 rounded-md text-[10px]"
+                                          value={chap.image}
+                                          onChange={(e) => {
+                                            const currentChapters = [...(sec.chapters || [])];
+                                            currentChapters[index] = { ...currentChapters[index], image: e.target.value };
+                                            updateSectionField(sec.id, 'chapters' as any, currentChapters);
+                                          }}
+                                        />
+                                        <button
+                                          type="button"
+                                          onClick={() => openImagePicker({ id: sec.id, field: 'chapters', type: 'section', index, subField: 'image' })}
+                                          className="px-3 bg-neutral-900 hover:bg-neutral-850 text-stone-300 border border-neutral-800 rounded-md text-[9px] uppercase font-bold flex items-center gap-1 cursor-pointer shrink-0"
+                                        >
+                                          <ImageIcon className="w-3.5 h-3.5 text-[#dfb76c]" />
+                                          <span>Pilih Poster</span>
+                                        </button>
+                                      </div>
+                                    </div>
+
+                                    <div>
+                                      <label className="block text-[8px] uppercase font-mono text-stone-500 mb-1">URL Link Video Trailer (.MP4 direct link)</label>
+                                      <input
+                                        type="text"
+                                        className="w-full bg-neutral-900 border border-neutral-800 text-[#dfb76c] font-mono p-2 rounded-md text-[10px]"
+                                        value={chap.videoUrl}
+                                        onChange={(e) => {
+                                          const currentChapters = [...(sec.chapters || [])];
+                                          currentChapters[index] = { ...currentChapters[index], videoUrl: e.target.value };
+                                          updateSectionField(sec.id, 'chapters' as any, currentChapters);
+                                        }}
+                                      />
+                                    </div>
+                                  </div>
+                                </div>
+                              ))}
                             </div>
                           </div>
                         )}
@@ -1043,23 +1335,89 @@ export default function WeddingEditorView() {
                   </div>
                 </div>
 
+                {/* Header with Add Button */}
+                <div className="flex justify-between items-center">
+                  <span className="text-[10px] font-black uppercase font-mono tracking-wider text-[#dfb76c]">Daftar Souvenir Gacha ({rewards.length})</span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const newReward = {
+                        id: `rew-${Date.now()}`,
+                        title: "Souvenir Baru",
+                        description: "Deskripsi klaim souvenir baru",
+                        imageUrl: "https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&q=80&w=500",
+                        probability: 10,
+                        quantity: 50,
+                        remaining: 50
+                      };
+                      setRewards([...rewards, newReward]);
+                    }}
+                    className="px-2.5 py-1 text-[9px] font-black uppercase tracking-wider font-mono bg-amber-500/10 hover:bg-amber-500/20 text-[#dfb76c] border border-[#dfb76c]/30 rounded-md transition cursor-pointer"
+                  >
+                    + Tambah Souvenir Baru
+                  </button>
+                </div>
+
                 {rewards.map((rew) => {
                   return (
                     <div key={rew.id} className="p-4 bg-neutral-950 rounded-2xl border border-neutral-850 space-y-3">
-                      <div className="flex gap-4 items-center border-b border-neutral-900 pb-3">
-                        <div className="w-12 h-12 rounded-lg bg-neutral-900 border border-neutral-800 overflow-hidden shrink-0">
-                          <img src={rew.imageUrl} alt={rew.title} className="w-full h-full object-cover" />
+                      <div className="flex items-center justify-between pb-1.5 border-b border-neutral-900">
+                        <span className="text-[7.5px] bg-red-950 text-red-400 border border-red-900/40 px-2 py-0.5 rounded font-black tracking-widest block w-fit font-mono">
+                          PRIZE ELEMENT {rew.id.toUpperCase()}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (window.confirm(`Apakah Anda yakin ingin menghapus souvenir "${rew.title}"?`)) {
+                              setRewards(rewards.filter(r => r.id !== rew.id));
+                            }
+                          }}
+                          className="px-1.5 py-0.5 text-[8px] font-bold font-mono bg-red-950/20 hover:bg-red-950/40 text-red-400 border border-red-900/30 rounded cursor-pointer"
+                        >
+                          Hapus Souvenir
+                        </button>
+                      </div>
+
+                      <div className="flex gap-4 items-start">
+                        <div className="w-14 h-14 rounded-lg bg-neutral-900 border border-neutral-800 overflow-hidden shrink-0">
+                          {rew.imageUrl ? (
+                            <img src={rew.imageUrl} alt={rew.title} className="w-full h-full object-cover" />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-[10px] text-stone-600 bg-neutral-900 font-mono">
+                              Kosong
+                            </div>
+                          )}
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <span className="text-[7.5px] bg-red-950 text-red-400 border border-red-900/40 px-2 py-0.5 rounded font-black tracking-widest block w-fit font-mono mb-1">
-                            PRIZE ELEMENT {rew.id.toUpperCase()}
-                          </span>
-                          <input 
-                            type="text"
-                            className="bg-transparent border-none focus:ring-0 p-0 text-white font-bold text-sm w-full focus:outline-none"
-                            value={rew.title}
-                            onChange={(e) => updateRewardField(rew.id, 'title', e.target.value)}
-                          />
+                        <div className="flex-1 space-y-3">
+                          <div>
+                            <label className="block text-[8px] uppercase font-mono text-stone-500 mb-1">Nama Souvenir</label>
+                            <input 
+                              type="text"
+                              className="w-full bg-neutral-900 border border-neutral-800 text-white p-2 rounded-md text-[10px]"
+                              value={rew.title}
+                              onChange={(e) => updateRewardField(rew.id, 'title', e.target.value)}
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-[8px] uppercase font-mono text-stone-500 mb-1">URL Gambar Souvenir</label>
+                            <div className="flex gap-2">
+                              <input 
+                                type="text"
+                                className="flex-1 bg-neutral-900 border border-neutral-800 text-stone-300 font-mono p-2 rounded-md text-[10px]"
+                                value={rew.imageUrl}
+                                onChange={(e) => updateRewardField(rew.id, 'imageUrl', e.target.value)}
+                              />
+                              <button
+                                type="button"
+                                onClick={() => openImagePicker({ id: rew.id, field: 'imageUrl', type: 'reward' })}
+                                className="px-3 bg-neutral-900 hover:bg-neutral-850 text-stone-300 border border-neutral-800 rounded-md text-[9px] uppercase font-bold flex items-center gap-1 cursor-pointer shrink-0"
+                              >
+                                <ImageIcon className="w-3.5 h-3.5 text-[#dfb76c]" />
+                                <span>Pilih Gambar</span>
+                              </button>
+                            </div>
+                          </div>
                         </div>
                       </div>
 
@@ -1220,6 +1578,134 @@ export default function WeddingEditorView() {
             )}
           </div>
 
+          {/* WORKSPACE ACCORDION SECTION 6: GUESTBOOK MODERATION DIRECT MANAGEMENT */}
+          <div className="bg-neutral-900/90 border border-neutral-800 rounded-3xl overflow-hidden shadow-2xl">
+            <button 
+              onClick={() => setActiveSectionAccordion(activeSectionAccordion === 'guestbook' ? '' : 'guestbook')}
+              className="w-full px-6 py-4 flex items-center justify-between bg-neutral-950/50 hover:bg-neutral-950 transition-all text-left border-b border-neutral-800"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400">
+                  <Heart className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-black text-white uppercase tracking-wider font-mono">6. Moderasi Cerita / Ucapan Tamu (Guestbook)</h3>
+                  <p className="text-[10px] text-stone-400 mt-0.5 font-sans">Kelola ucapan doa restu tamu, sembunyikan pesan tidak pantas, atau hapus teks spam</p>
+                </div>
+              </div>
+              {activeSectionAccordion === 'guestbook' ? <ChevronUp className="w-4 h-4 text-stone-500" /> : <ChevronDown className="w-4 h-4 text-stone-500" />}
+            </button>
+
+            {activeSectionAccordion === 'guestbook' && (
+              <div className="p-6 space-y-4 text-xs">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 pb-3 border-b border-neutral-850">
+                  <div>
+                    <span className="text-[9px] uppercase tracking-wider font-mono font-bold text-stone-500">Daftar Ucapan Masuk ({guestbook.length} Ucapan)</span>
+                    <p className="text-[9.5px] text-stone-400 mt-0.5 leading-relaxed font-sans font-medium">Semua ucapan tamu muncul di publik secara default. Anda dapat menyembunyikan yang tidak diinginkan di sini.</p>
+                  </div>
+                  <button 
+                    type="button" 
+                    onClick={() => setGuestbook(weddingDb.getGuestbook(slug))}
+                    className="text-[9px] uppercase font-mono font-bold text-[#dfb76c] hover:text-white flex items-center gap-1 cursor-pointer bg-neutral-950 px-3 py-1.5 rounded-full border border-neutral-850"
+                  >
+                    <RefreshCw className="w-3 h-3" /> Segarkan
+                  </button>
+                </div>
+
+                {guestbook.length === 0 ? (
+                  <div className="p-8 text-center bg-neutral-950/40 rounded-xl border border-neutral-850/50 text-stone-500">
+                    Belum ada ucapan doa terkirim dari para tamu.
+                  </div>
+                ) : (
+                  <div className="space-y-4 max-h-[500px] overflow-y-auto pr-1 scrollbar-hide">
+                    {guestbook.map((msg) => (
+                      <div 
+                        key={msg.id}
+                        className={`p-4 rounded-2xl border transition duration-250 flex flex-col md:flex-row gap-4 justify-between items-start md:items-center ${
+                          msg.isHidden 
+                            ? 'bg-neutral-950/40 border-neutral-900 opacity-60 text-stone-400' 
+                            : 'bg-neutral-950 border-neutral-800 text-stone-200'
+                        }`}
+                      >
+                        <div className="flex items-start gap-3 min-w-0 flex-1">
+                          <div className="w-10 h-10 rounded-full bg-neutral-900 flex items-center justify-center shrink-0 border border-neutral-800 text-lg">
+                            {msg.avatar || '👩'}
+                          </div>
+                          <div className="space-y-1 min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="font-bold text-white leading-tight">{msg.name}</span>
+                              <span className="text-[8px] bg-red-950/50 text-red-500 px-1.5 py-0.5 rounded border border-red-900/40 font-mono uppercase leading-none font-bold">
+                                {msg.relation || 'Sahabat'}
+                              </span>
+                              {msg.isHidden ? (
+                                <span className="text-[8px] bg-neutral-900 text-neutral-400 px-1.5 py-0.5 rounded border border-neutral-800 font-mono uppercase leading-none font-bold flex items-center gap-1">
+                                  <EyeOff className="w-2.5 h-2.5" /> Tersembunyi (Private)
+                                </span>
+                              ) : (
+                                <span className="text-[8px] bg-emerald-950/30 text-emerald-400 px-1.5 py-0.5 rounded border border-emerald-900/40 font-mono uppercase leading-none font-bold flex items-center gap-1">
+                                  <Eye className="w-2.5 h-2.5" /> Publik (Dilihat Semua Tamu)
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-stone-300 italic font-medium leading-relaxed font-sans">
+                              "{msg.message}"
+                            </p>
+                            {msg.prayer && (
+                              <p className="text-[10px] text-stone-400 leading-normal font-sans">
+                                <span className="text-[#dfb76c]">Doa:</span> {msg.prayer}
+                              </p>
+                            )}
+                            {msg.aiReply && (
+                              <div className="mt-2 bg-[#821E1E]/5 p-2 rounded-xl border border-red-900/20 font-mono text-[9px] text-stone-400">
+                                <div className="text-[8px] text-[#dfb76c] uppercase font-bold tracking-wider mb-0.5">Balasan AI Co-Host:</div>
+                                "{msg.aiReply}"
+                              </div>
+                            )}
+                            <span className="text-[8px] text-stone-500 font-mono block">
+                              Dikirim pada: {new Date(msg.createdAt).toLocaleString('id-ID')}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Control buttons */}
+                        <div className="flex gap-2 w-full md:w-auto justify-end border-t md:border-t-0 border-neutral-850 pt-3 md:pt-0 shrink-0">
+                          <button
+                            type="button"
+                            onClick={() => toggleMessageVisibility(msg.id)}
+                            className={`px-3 py-1.5 rounded-xl border font-mono font-bold text-[10px] uppercase transition flex items-center gap-1.5 cursor-pointer ${
+                              msg.isHidden
+                                ? 'bg-emerald-950/30 hover:bg-emerald-900/50 text-emerald-400 border-emerald-900/40'
+                                : 'bg-amber-950/35 hover:bg-amber-950/70 text-amber-500 border-amber-900/40'
+                            }`}
+                          >
+                            {msg.isHidden ? (
+                              <>
+                                <Eye className="w-3.5 h-3.5" /> Tampilkan di Publik
+                              </>
+                            ) : (
+                              <>
+                                <EyeOff className="w-3.5 h-3.5" /> Sembunyikan
+                              </>
+                            )}
+                          </button>
+                          
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteMessage(msg.id)}
+                            className="p-1.5 rounded-xl bg-red-950/20 border border-red-900/40 text-red-500 hover:bg-red-950 hover:text-white transition flex items-center justify-center cursor-pointer"
+                            title="Hapus Permanen"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
           {/* BACKUP RESTORE SYSTEM TOOLBAR PANEL */}
           <div className="bg-neutral-900/90 border border-neutral-800 rounded-3xl overflow-hidden shadow-2xl">
             <button 
@@ -1231,8 +1717,8 @@ export default function WeddingEditorView() {
                   <FileCode className="w-4 h-4" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-black text-white uppercase tracking-wider font-mono">6. Backup / Restore JSON Data</h3>
-                  <p className="text-[10px] text-stone-400 mt-0.5">Ekspor konfigurasi atau masukkan backup data mentah</p>
+                  <h3 className="text-sm font-black text-white uppercase tracking-wider font-mono">7. Backup / Restore JSON Data</h3>
+                  <p className="text-[10px] text-stone-400 mt-0.5 font-sans">Ekspor konfigurasi atau masukkan backup data mentah</p>
                 </div>
               </div>
               {isBackupExpanded ? <ChevronUp className="w-4 h-4 text-stone-500" /> : <ChevronDown className="w-4 h-4 text-stone-500" />}

@@ -1,5 +1,14 @@
 import { isSupabaseConfigured, supabase } from './supabase';
 
+export interface CinematicChapterType {
+  title: string;
+  subtitle: string;
+  genre: string;
+  image: string;
+  quote: string;
+  videoUrl: string;
+}
+
 export interface WeddingSectionType {
   id: string;
   type: 'cover' | 'movie_poster' | 'bride' | 'groom' | 'story' | 'gallery' | 'timeline' | 'rsvp' | 'gift' | 'guestbook';
@@ -10,6 +19,8 @@ export interface WeddingSectionType {
   videoUrl?: string;
   isEnabled: boolean;
   order: number;
+  images?: string[];
+  chapters?: CinematicChapterType[];
 }
 
 export interface WeddingWalletType {
@@ -44,6 +55,7 @@ export interface WeddingGuestbookMessage {
   createdAt: string;
   aiReply?: string;
   weddingSlug: string;
+  isHidden?: boolean;
 }
 
 export interface WeddingRSVPTicket {
@@ -319,9 +331,79 @@ export const weddingDb = {
   getSections(slug: string = 'hanum-luthfi'): WeddingSectionType[] {
     const key = `wedding_sections_${slug}`;
     if (!localStorage.getItem(key)) {
-      localStorage.setItem(key, JSON.stringify(DEFAULT_SECTIONS));
+       localStorage.setItem(key, JSON.stringify(DEFAULT_SECTIONS));
     }
-    return JSON.parse(localStorage.getItem(key)!) as WeddingSectionType[];
+    const secs = JSON.parse(localStorage.getItem(key)!) as WeddingSectionType[];
+    
+    // Ensure gallery has images
+    const gal = secs.find(s => s.type === 'gallery');
+    if (gal && !gal.images) {
+      gal.images = [
+        'https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&q=80&w=600',
+        'https://images.unsplash.com/photo-1515934751635-c81c6bc9a2d8?auto=format&fit=crop&q=80&w=600',
+        'https://images.unsplash.com/photo-1606800052052-a08af7148866?auto=format&fit=crop&q=80&w=600',
+        'https://images.unsplash.com/photo-1524661135-423995f22d0b?auto=format&fit=crop&q=80&w=600',
+        'https://images.unsplash.com/photo-1532712938310-34cb3982ef74?auto=format&fit=crop&q=80&w=600',
+        'https://images.unsplash.com/photo-1465495976277-4387d4b0b4c6?auto=format&fit=crop&q=80&w=600',
+        'https://images.unsplash.com/photo-1511285560929-80b456fea0bc?auto=format&fit=crop&q=80&w=600',
+        'https://images.unsplash.com/photo-1583939003579-730e3918a45a?auto=format&fit=crop&q=80&w=600',
+        'https://images.unsplash.com/photo-1519225495810-7512c696505a?auto=format&fit=crop&q=80&w=600',
+        'https://images.unsplash.com/photo-1502444330042-d1a1ddf9bb5b?auto=format&fit=crop&q=80&w=600',
+        'https://images.unsplash.com/photo-1507504038482-76210061e0bb?auto=format&fit=crop&q=80&w=600',
+        'https://images.unsplash.com/photo-1591604466107-ec97de577aff?auto=format&fit=crop&q=80&w=600'
+      ];
+      localStorage.setItem(key, JSON.stringify(secs));
+    }
+
+    // Ensure movie_poster has chapters
+    const mov = secs.find(s => s.type === 'movie_poster');
+    if (mov && !mov.chapters) {
+      mov.chapters = [
+        {
+          title: "Detail Sakral",
+          subtitle: "Rencana Pembuka",
+          genre: "Dokumenter • Roman",
+          image: "https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&q=80&w=500",
+          quote: "Langkah awal memulai perbincangan tentang arti kesungguhan.",
+          videoUrl: "https://www.w3schools.com/html/mov_bbb.mp4"
+        },
+        {
+          title: "Kamu dan...",
+          subtitle: "Rapat Pendampingan",
+          genre: "Romansa • Kelas",
+          image: "https://images.unsplash.com/photo-1511285560929-80b456fea0bc?auto=format&fit=crop&q=80&w=500",
+          quote: "Di sela-sela pembahasan kode rapor rilis, tersimpan senyum yang tulus.",
+          videoUrl: "https://www.w3schools.com/html/mov_bbb.mp4"
+        },
+        {
+          title: "Keberangkatan",
+          subtitle: "Jangan Melamun Saat Hujan",
+          genre: "Romansa • Drama",
+          image: "https://images.unsplash.com/photo-1515934751635-c81c6bc9a2d8?auto=format&fit=crop&q=80&w=500",
+          quote: "Perjalanan kereta yang mempertemukan dua insan dari kota pelabuhan menuju ketenangan.",
+          videoUrl: "https://www.w3schools.com/html/mov_bbb.mp4"
+        },
+        {
+          title: "Memotret Keindahan",
+          subtitle: "Sudut Lama Kota Lama",
+          genre: "Romansa • Dokumenter",
+          image: "https://images.unsplash.com/photo-1606800052052-a08af7148866?auto=format&fit=crop&q=80&w=500",
+          quote: "Melalui lensa kamera, rasa kagum perlahan diabadikan dalam bingkai abadi.",
+          videoUrl: "https://www.w3schools.com/html/mov_bbb.mp4"
+        },
+        {
+          title: "Pertumbuhan",
+          subtitle: "Saling Belajar",
+          genre: "Drama • Motivasi",
+          image: "https://images.unsplash.com/photo-1465495976277-4387d4b0b4c6?auto=format&fit=crop&q=80&w=500",
+          quote: "Menemukan arti bersandar di kala lelah membimbing generasi penerus bangsa.",
+          videoUrl: "https://www.w3schools.com/html/mov_bbb.mp4"
+        }
+      ];
+      localStorage.setItem(key, JSON.stringify(secs));
+    }
+    
+    return secs;
   },
 
   saveSections(sections: WeddingSectionType[], slug: string = 'hanum-luthfi') {
@@ -369,6 +451,18 @@ export const weddingDb = {
       localStorage.setItem(key, JSON.stringify(DEFAULT_GUESTBOOK_MESSAGES));
     }
     return JSON.parse(localStorage.getItem(key)!) as WeddingGuestbookMessage[];
+  },
+
+  saveGuestbook(guestbook: WeddingGuestbookMessage[], slug: string = 'hanum-luthfi') {
+    const key = `wedding_guestbook_${slug}`;
+    localStorage.setItem(key, JSON.stringify(guestbook));
+
+    // Dispatch async write to server
+    fetch('/api/wedding-state/guestbook-all', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ guestbook })
+    }).catch(err => console.error('[weddingDb] Failed to sync guestbook to server:', err));
   },
 
   async addGuestbook(entry: Omit<WeddingGuestbookMessage, 'id' | 'createdAt'>, slug: string = 'hanum-luthfi'): Promise<WeddingGuestbookMessage> {

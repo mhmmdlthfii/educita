@@ -3,7 +3,7 @@ import {
   ArrowLeft, Sliders, Layout, Users, MessageSquare, Gift, 
   ToggleLeft, ToggleRight, ArrowUp, ArrowDown, HelpCircle, 
   Check, Save, RefreshCw, Trash2, ShieldCheck, Heart, Sparkles, 
-  MapPin, CheckCircle, Clock, Search, Palette, User, Volume2, Film, QrCode
+  MapPin, CheckCircle, Clock, Search, Palette, User, Volume2, Film, QrCode, Eye, EyeOff
 } from 'lucide-react';
 import { 
   weddingDb, WeddingSectionType, WeddingSettingsType, 
@@ -144,7 +144,18 @@ export default function AdminWeddingView() {
     const filtered = guestBook.filter(g => g.id !== id);
     setGuestBook(filtered);
     localStorage.setItem('wedding_guestbook_hanum-luthfi', JSON.stringify(filtered));
+    // sync with server
+    weddingDb.saveGuestbook(filtered, 'hanum-luthfi');
     showFlash('Ucapan tamu berhasil dihapus dari Memory Wall.');
+  };
+
+  const handleToggleGuestMessageVisibility = (id: string) => {
+    const updated = guestBook.map(g => g.id === id ? { ...g, isHidden: !g.isHidden } : g);
+    setGuestBook(updated);
+    localStorage.setItem('wedding_guestbook_hanum-luthfi', JSON.stringify(updated));
+    // sync with server
+    weddingDb.saveGuestbook(updated, 'hanum-luthfi');
+    showFlash(updated.find(g => g.id === id)?.isHidden ? 'Ucapan tamu disembunyikan dari publik.' : 'Ucapan tamu sekarang terlihat di publik.');
   };
 
   const handleUpdateAiReply = (id: string, text: string) => {
@@ -823,13 +834,33 @@ export default function AdminWeddingView() {
                             )}
                           </div>
                           <div>
-                            <h4 className="font-extrabold text-[#dfb76c]">{gm.name}</h4>
+                            <div className="flex items-center gap-2">
+                              <h4 className="font-extrabold text-[#dfb76c]">{gm.name}</h4>
+                              {gm.isHidden ? (
+                                <span className="text-[8px] bg-slate-950 text-rose-400 border border-rose-900/40 px-1.5 py-0.5 rounded font-black font-mono">TERSEMBUNYI</span>
+                              ) : (
+                                <span className="text-[8px] bg-slate-950 text-emerald-400 border border-emerald-950/40 px-1.5 py-0.5 rounded font-black font-mono">PUBLIK</span>
+                              )}
+                            </div>
                             <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">{gm.relation}</span>
                           </div>
                         </div>
 
                         <div className="flex items-center gap-1.5 shrink-0">
                           <span className="text-[9px] text-slate-500 font-mono mr-1.5">{new Date(gm.createdAt).toLocaleDateString('id-ID')}</span>
+                          
+                          <button
+                            onClick={() => handleToggleGuestMessageVisibility(gm.id)}
+                            className={`p-1 px-2.5 rounded-lg text-[10px] font-bold transition cursor-pointer flex items-center gap-1 border ${
+                              gm.isHidden 
+                                ? 'bg-emerald-500/10 hover:bg-emerald-500 hover:text-slate-950 border-emerald-500/25 text-emerald-400' 
+                                : 'bg-amber-500/10 hover:bg-amber-500 hover:text-slate-950 border-amber-500/25 text-amber-400'
+                            }`}
+                          >
+                            {gm.isHidden ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
+                            <span>{gm.isHidden ? 'Tampilkan' : 'Sembunyikan'}</span>
+                          </button>
+
                           <button 
                             onClick={() => handleDeleteGuestMessage(gm.id)}
                             className="p-1 px-2.5 bg-rose-500/10 hover:bg-rose-500 hover:text-white border border-rose-500/25 rounded-lg text-[10px] font-bold text-rose-400 transition cursor-pointer flex items-center gap-1"
