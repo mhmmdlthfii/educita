@@ -717,24 +717,35 @@ export default function WeddingEditorView() {
 
                     {/* Image selector widget */}
                     <div>
-                      <label className="block text-[9px] uppercase font-mono font-bold text-stone-400 mb-1">Foto Mempelai Wanita (Presets Unsplash / Paste URL)</label>
-                      <div className="grid grid-cols-3 gap-2 mb-2">
-                        {IMAGE_PRESETS.bride.map((br, idx) => (
-                          <button
-                            key={idx}
-                            type="button"
-                            onClick={() => updateSectionField(sectionBride.id, 'mediaUrl', br.url)}
-                            className="relative aspect-square rounded-lg overflow-hidden border border-neutral-850 group hover:border-[#dfb76c] cursor-pointer transition"
-                          >
-                            <img src={br.url} alt="bride" className="w-full h-full object-cover" />
-                            {sectionBride.mediaUrl === br.url && (
-                              <div className="absolute inset-0 bg-red-950/70 flex items-center justify-center">
-                                <Check className="w-5 h-5 text-[#dfb76c]" />
-                              </div>
-                            )}
-                          </button>
-                        ))}
+                      <label className="block text-[9px] uppercase font-mono font-bold text-stone-400 mb-1">Foto Mempelai Wanita</label>
+
+                      {/* LIVE INTERACTIVE PREVIEW */}
+                      <div className="mb-3 p-3 bg-neutral-950 rounded-xl border border-neutral-850 flex items-center gap-3">
+                        <div className="w-14 h-14 rounded-lg bg-neutral-900 border border-neutral-800 overflow-hidden shrink-0">
+                          {sectionBride.mediaUrl ? (
+                            <img 
+                              src={sectionBride.mediaUrl} 
+                              alt="Live Preview Bride" 
+                              className="w-full h-full object-cover" 
+                              referrerPolicy="no-referrer"
+                              onError={(e) => {
+                                (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=150';
+                              }}
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-stone-600 bg-neutral-900">
+                              No Pic
+                            </div>
+                          )}
+                        </div>
+                        <div>
+                          <span className="text-[8px] uppercase font-mono font-bold text-[#dfb76c] block">PRATINJAU FOTO AKTIF (INTERAKTIF)</span>
+                          <span className="text-[10px] text-stone-300 font-medium truncate max-w-[200px] block font-mono">
+                            {sectionBride.mediaUrl ? sectionBride.mediaUrl : 'Belum memilih foto'}
+                          </span>
+                        </div>
                       </div>
+
                       <div className="flex gap-2">
                         <input 
                           type="text"
@@ -794,24 +805,35 @@ export default function WeddingEditorView() {
                     </div>
 
                     <div>
-                      <label className="block text-[9px] uppercase font-mono font-bold text-stone-400 mb-1">Foto Mempelai Pria (Presets Unsplash / Paste URL)</label>
-                      <div className="grid grid-cols-3 gap-2 mb-2">
-                        {IMAGE_PRESETS.groom.map((gr, idx) => (
-                          <button
-                            key={idx}
-                            type="button"
-                            onClick={() => updateSectionField(sectionGroom.id, 'mediaUrl', gr.url)}
-                            className="relative aspect-square rounded-lg overflow-hidden border border-neutral-850 group hover:border-[#dfb76c] cursor-pointer transition"
-                          >
-                            <img src={gr.url} alt="groom" className="w-full h-full object-cover" />
-                            {sectionGroom.mediaUrl === gr.url && (
-                              <div className="absolute inset-0 bg-red-950/70 flex items-center justify-center">
-                                <Check className="w-5 h-5 text-[#dfb76c]" />
-                              </div>
-                            )}
-                          </button>
-                        ))}
+                      <label className="block text-[9px] uppercase font-mono font-bold text-stone-400 mb-1">Foto Mempelai Pria</label>
+
+                      {/* LIVE INTERACTIVE PREVIEW */}
+                      <div className="mb-3 p-3 bg-neutral-950 rounded-xl border border-neutral-850 flex items-center gap-3">
+                        <div className="w-14 h-14 rounded-lg bg-neutral-900 border border-neutral-800 overflow-hidden shrink-0">
+                          {sectionGroom.mediaUrl ? (
+                            <img 
+                              src={sectionGroom.mediaUrl} 
+                              alt="Live Preview Groom" 
+                              className="w-full h-full object-cover" 
+                              referrerPolicy="no-referrer"
+                              onError={(e) => {
+                                (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=150';
+                              }}
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-stone-600 bg-neutral-900">
+                              No Pic
+                            </div>
+                          )}
+                        </div>
+                        <div>
+                          <span className="text-[8px] uppercase font-mono font-bold text-[#dfb76c] block">PRATINJAU FOTO AKTIF (INTERAKTIF)</span>
+                          <span className="text-[10px] text-stone-300 font-medium truncate max-w-[200px] block font-mono">
+                            {sectionGroom.mediaUrl ? sectionGroom.mediaUrl : 'Belum memilih foto'}
+                          </span>
+                        </div>
                       </div>
+
                       <div className="flex gap-2">
                         <input 
                           type="text"
@@ -923,25 +945,35 @@ export default function WeddingEditorView() {
 
                         {sec.mediaUrl !== undefined && sec.type !== 'bride' && sec.type !== 'groom' && (
                           <div>
-                            <label className="block text-[8px] uppercase font-mono text-stone-500 mb-1">URL Media Gambar (Cover / Poster / Galeri)</label>
-                            
-                            {/* Preset picker panel for generic images */}
-                            <div className="grid grid-cols-4 gap-2 mb-2">
-                              {IMAGE_PRESETS.gallery.map((g, idx) => (
-                                <button
-                                  key={idx}
-                                  type="button"
-                                  onClick={() => updateSectionField(sec.id, 'mediaUrl', g.url)}
-                                  className="relative aspect-video rounded-md overflow-hidden bg-stone-900 border border-neutral-850 group hover:border-[#dfb76c] cursor-pointer transition"
-                                >
-                                  <img src={g.url} alt="g" className="w-full h-full object-cover" />
-                                  {sec.mediaUrl === g.url && (
-                                    <div className="absolute inset-0 bg-red-950/70 flex items-center justify-center">
-                                      <Check className="w-3.5 h-3.5 text-[#dfb76c]" />
-                                    </div>
-                                  )}
-                                </button>
-                              ))}
+                            <label className="block text-[8px] uppercase font-mono text-stone-400 mb-1">
+                              {sec.type === 'cover' ? 'URL Gambar Latar Belakang Cover' : 'URL Media Gambar (Cover / Poster / Galeri)'}
+                            </label>
+
+                            {/* LIVE INTERACTIVE PREVIEW */}
+                            <div className="mb-3 p-3 bg-neutral-950 rounded-xl border border-neutral-850 flex items-center gap-3">
+                              <div className="w-20 h-12 rounded-lg bg-neutral-900 border border-neutral-800 overflow-hidden shrink-0">
+                                {sec.mediaUrl ? (
+                                  <img 
+                                    src={sec.mediaUrl} 
+                                    alt="Live Preview Section" 
+                                    className="w-full h-full object-cover" 
+                                    referrerPolicy="no-referrer"
+                                    onError={(e) => {
+                                      (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&q=80&w=500';
+                                    }}
+                                  />
+                                ) : (
+                                  <div className="w-full h-full flex items-center justify-center text-stone-600 bg-neutral-900">
+                                    No Pic
+                                  </div>
+                                )}
+                              </div>
+                              <div>
+                                <span className="text-[8px] uppercase font-mono font-bold text-[#dfb76c] block">PRATINJAU MEDIA AKTIF (INTERAKTIF)</span>
+                                <span className="text-[10px] text-stone-300 font-medium truncate max-w-[200px] block font-mono">
+                                  {sec.mediaUrl ? sec.mediaUrl : 'Belum memilih media'}
+                                </span>
+                              </div>
                             </div>
 
                             <div className="flex gap-2">

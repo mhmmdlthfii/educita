@@ -297,30 +297,43 @@ export default function WeddingView({ toGuest, slug = 'hanum-luthfi' }: WeddingV
   // Audio Autoplay & Lifecycle
   useEffect(() => {
     if (settings?.backgroundMusicUrl && isOpen) {
-      if (getYouTubeId(settings.backgroundMusicUrl)) {
+      const ytId = getYouTubeId(settings.backgroundMusicUrl);
+      if (ytId) {
         if (settings.hasMusicAutoPlay) {
           setIsMusicPlaying(true);
         }
         return;
       }
-      const audio = new Audio(settings.backgroundMusicUrl);
-      audio.loop = true;
-      audioRef.current = audio;
-      if (settings.hasMusicAutoPlay) {
+      
+      let audio = audioRef.current;
+      if (!audio || audio.src !== settings.backgroundMusicUrl) {
+        if (audio) {
+          audio.pause();
+        }
+        audio = new Audio(settings.backgroundMusicUrl);
+        audio.loop = true;
+        audioRef.current = audio;
+      }
+      
+      if (settings.hasMusicAutoPlay && audio.paused) {
         audio.play().then(() => {
           setIsMusicPlaying(true);
         }).catch(err => {
-          console.log('Autoplay audio blocked by browser. Awaiting user interaction.');
+          console.log('Autoplay audio blocked by browser. Awaiting user interaction.', err);
         });
       }
     }
+  }, [isOpen, settings?.backgroundMusicUrl, settings?.hasMusicAutoPlay]);
+
+  // Clean up audio on unmount only
+  useEffect(() => {
     return () => {
       if (audioRef.current) {
         audioRef.current.pause();
         audioRef.current = null;
       }
     };
-  }, [isOpen, settings]);
+  }, []);
 
   // Story Autoplay Carousel Timer
   useEffect(() => {
@@ -646,10 +659,17 @@ export default function WeddingView({ toGuest, slug = 'hanum-luthfi' }: WeddingV
               id="btn-open-check-in"
               onClick={() => {
                 setCoverStep(2);
-                if (settings?.backgroundMusicUrl && !getYouTubeId(settings.backgroundMusicUrl) && !audioRef.current) {
-                  const audio = new Audio(settings.backgroundMusicUrl);
-                  audio.loop = true;
-                  audioRef.current = audio;
+                if (settings?.backgroundMusicUrl && !getYouTubeId(settings.backgroundMusicUrl)) {
+                  if (!audioRef.current) {
+                    const audio = new Audio(settings.backgroundMusicUrl);
+                    audio.loop = true;
+                    audioRef.current = audio;
+                  }
+                  if (settings.hasMusicAutoPlay) {
+                    audioRef.current.play().then(() => {
+                      setIsMusicPlaying(true);
+                    }).catch(e => console.log('Audio playback initialized on check-in user touch', e));
+                  }
                 }
               }}
               className="w-full max-w-[200px] mt-8 py-3.5 rounded-full bg-red-650 hover:bg-red-750 font-extrabold uppercase tracking-widest text-[11px] cursor-pointer shadow-lg shadow-red-950/40 border border-red-700/50 flex items-center justify-center gap-2 transform active:scale-95 transition-all duration-200"
